@@ -1,5 +1,6 @@
 # Icon Count Editor
 A C++ library for editing icon counts in Geometry Dash.
+
 **Note: This library is only for use in mods created with the [Geode SDK](https://github.com/geode-sdk/geode).**
 
 ## Inclusion
