@@ -12,6 +12,8 @@
 
 using namespace geode::prelude;
 
+std::map<IconType, int> IconCountEditor::iconCounts = {};
+
 #define ICE_MODIFY \
     static void onModify(auto& self) { \
         for (auto& [name, hook] : self.m_hooks) { \
@@ -333,7 +335,7 @@ class $modify(ICEPlayerObject, PlayerObject) {
         m_swapColors = gm->getGameVariable("0061");
         m_switchDashFireColor = gm->getGameVariable("0062");
         #ifndef GEODE_IS_ANDROID // I simply cannot believe this
-        m_playerFollowFloats.resize(200, 0);
+        m_playerFollowFloats.resize(200, 0.0f);
         #else
         auto oldSize = m_playerFollowFloats.size();
         m_playerFollowFloats.resize(200);
@@ -540,88 +542,89 @@ class $modify(ICESimplePlayer, SimplePlayer) {
     }
 };
 
-#ifdef GEODE_IS_WINDOWS
-#define PATCH(offset, ...) \
-    if (auto res = mod->patch(reinterpret_cast<void*>(dash + offset), { __VA_ARGS__ }); res.isErr()) { \
+#if defined(GEODE_IS_WINDOWS)
+#define PATCH(offset) \
+    auto count = it->second; \
+    auto b1 = (uint8_t)((count >> 24) & 0xff); \
+    auto b2 = (uint8_t)((count >> 16) & 0xff); \
+    auto b3 = (uint8_t)((count >> 8) & 0xff); \
+    auto b4 = (uint8_t)(count & 0xff); \
+    if (auto res = mod->patch(reinterpret_cast<void*>(dash + offset), { b1, b2, b3, b4 }); res.isErr()) { \
+        failCount++; \
         log::error("Failed to patch GeometryDash.exe + " #offset ": {}", res.unwrapErr()); \
     } \
 
-$execute {
+Result<void, void> IconCountEditor::patch() {
     auto dash = base::get();
+    auto failCount = 0;
     auto mod = Mod::get();
-    if (IconCountEditor::hasType(IconType::Robot)) {
-        auto count = IconCountEditor::getCount(IconType::Robot);
-        PATCH(0x31dfa1, (uint8_t)((count >> 24) & 0xff), (uint8_t)((count >> 16) & 0xff), (uint8_t)((count >> 8) & 0xff), (uint8_t)(count & 0xff));
+    if (auto it = iconCounts.find(IconType::Robot); it != iconCounts.end()) {
+        PATCH(0x31dfa1);
     }
-    if (IconCountEditor::hasType(IconType::Spider)) {
-        auto count = IconCountEditor::getCount(IconType::Spider);
-        PATCH(0x31e0cf, (uint8_t)((count >> 24) & 0xff), (uint8_t)((count >> 16) & 0xff), (uint8_t)((count >> 8) & 0xff), (uint8_t)(count & 0xff));
+    if (auto it = iconCounts.find(IconType::Spider); it != iconCounts.end()) {
+        PATCH(0x31e0cf);
     }
+    if (failCount > 0) return Err();
+    else return Ok();
 }
-#endif
-
-#ifdef GEODE_IS_ANDROID64
-#define PATCH_MOV(symbol, offset) \
+#elif defined(GEODE_IS_ANDROID64)
+#define PATCH_MOV(name, symbol, offset) \
     auto GEODE_CONCAT(sym, __LINE__) = reinterpret_cast<uintptr_t>(dlsym(dash, symbol)) + offset; \
     auto GEODE_CONCAT(value, __LINE__) = *reinterpret_cast<uint32_t*>(GEODE_CONCAT(sym, __LINE__)) & 0xffe0001f; \
-    GEODE_CONCAT(value, __LINE__) |= (count & 0xffff) << 5; \
+    GEODE_CONCAT(value, __LINE__) |= (it->second & 0xffff) << 5; \
     if (auto res = mod->patch(reinterpret_cast<void*>(GEODE_CONCAT(sym, __LINE__)), { \
         (uint8_t)((GEODE_CONCAT(value, __LINE__) >> 24) & 0xff), \
         (uint8_t)((GEODE_CONCAT(value, __LINE__) >> 16) & 0xff), \
         (uint8_t)((GEODE_CONCAT(value, __LINE__) >> 8) & 0xff), \
         (uint8_t)(GEODE_CONCAT(value, __LINE__) & 0xff) \
-    }); res.isErr()) log::error("Failed to patch " symbol " + " #offset ": {}", res.unwrapErr()); \
+    }); res.isErr()) { \
+        failCount++; \
+        log::error("Failed to patch " name " + " #offset ": {}", res.unwrapErr()); \
+    } \
 
-$execute {
+Result<void, void> IconCountEditor::patch() {
     auto dash = dlopen("libcocos2dcpp.so", RTLD_LAZY | RTLD_NOLOAD);
+    auto failCount = 0;
     auto mod = Mod::get();
-    if (IconCountEditor::hasType(IconType::Cube)) {
-        auto count = IconCountEditor::getCount(IconType::Cube);
-        PATCH_MOV("_ZN11GameManager12countForTypeE8IconType", 0x28);
+    if (auto it = iconCounts.find(IconType::Cube); it != iconCounts.end()) {
+        PATCH_MOV("GameManager::countForType(IconType)", "_ZN11GameManager12countForTypeE8IconType", 0x28);
     }
-    if (IconCountEditor::hasType(IconType::Ship)) {
-        auto count = IconCountEditor::getCount(IconType::Ship);
-        PATCH_MOV("_ZN11GameManager12countForTypeE8IconType", 0x30);
+    if (auto it = iconCounts.find(IconType::Ship); it != iconCounts.end()) {
+        PATCH_MOV("GameManager::countForType(IconType)", "_ZN11GameManager12countForTypeE8IconType", 0x30);
     }
-    if (IconCountEditor::hasType(IconType::Ball)) {
-        auto count = IconCountEditor::getCount(IconType::Ball);
-        PATCH_MOV("_ZN11GameManager12countForTypeE8IconType", 0x38);
+    if (auto it = iconCounts.find(IconType::Ball); it != iconCounts.end()) {
+        PATCH_MOV("GameManager::countForType(IconType)", "_ZN11GameManager12countForTypeE8IconType", 0x38);
     }
-    if (IconCountEditor::hasType(IconType::Ufo)) {
-        auto count = IconCountEditor::getCount(IconType::Ufo);
-        PATCH_MOV("_ZN11GameManager12countForTypeE8IconType", 0x40);
+    if (auto it = iconCounts.find(IconType::Ufo); it != iconCounts.end()) {
+        PATCH_MOV("GameManager::countForType(IconType)", "_ZN11GameManager12countForTypeE8IconType", 0x40);
     }
-    if (IconCountEditor::hasType(IconType::Wave)) {
-        auto count = IconCountEditor::getCount(IconType::Wave);
-        PATCH_MOV("_ZN11GameManager12countForTypeE8IconType", 0x48);
+    if (auto it = iconCounts.find(IconType::Wave); it != iconCounts.end()) {
+        PATCH_MOV("GameManager::countForType(IconType)", "_ZN11GameManager12countForTypeE8IconType", 0x48);
     }
-    if (IconCountEditor::hasType(IconType::Robot)) {
-        auto count = IconCountEditor::getCount(IconType::Robot);
-        PATCH_MOV("_ZN11GameManager12countForTypeE8IconType", 0x50);
+    if (auto it = iconCounts.find(IconType::Robot); it != iconCounts.end()) {
+        PATCH_MOV("GameManager::countForType(IconType)", "_ZN11GameManager12countForTypeE8IconType", 0x50);
     }
-    if (IconCountEditor::hasType(IconType::Spider)) {
-        auto count = IconCountEditor::getCount(IconType::Spider);
-        PATCH_MOV("_ZN11GameManager12countForTypeE8IconType", 0x58);
+    if (auto it = iconCounts.find(IconType::Spider); it != iconCounts.end()) {
+        PATCH_MOV("GameManager::countForType(IconType)", "_ZN11GameManager12countForTypeE8IconType", 0x58);
     }
-    if (IconCountEditor::hasType(IconType::Swing)) {
-        auto count = IconCountEditor::getCount(IconType::Swing);
-        PATCH_MOV("_ZN11GameManager12countForTypeE8IconType", 0x60);
+    if (auto it = iconCounts.find(IconType::Swing); it != iconCounts.end()) {
+        PATCH_MOV("GameManager::countForType(IconType)", "_ZN11GameManager12countForTypeE8IconType", 0x60);
     }
-    if (IconCountEditor::hasType(IconType::Jetpack)) {
-        auto count = IconCountEditor::getCount(IconType::Jetpack);
-        PATCH_MOV("_ZN11GameManager12countForTypeE8IconType", 0x68);
+    if (auto it = iconCounts.find(IconType::Jetpack); it != iconCounts.end()) {
+        PATCH_MOV("GameManager::countForType(IconType)", "_ZN11GameManager12countForTypeE8IconType", 0x68);
     }
-    if (IconCountEditor::hasType(IconType::DeathEffect)) {
-        auto count = IconCountEditor::getCount(IconType::DeathEffect);
-        PATCH_MOV("_ZN11GameManager12countForTypeE8IconType", 0x70);
+    if (auto it = iconCounts.find(IconType::DeathEffect); it != iconCounts.end()) {
+        PATCH_MOV("GameManager::countForType(IconType)", "_ZN11GameManager12countForTypeE8IconType", 0x70);
     }
-    if (IconCountEditor::hasType(IconType::Special)) {
-        auto count = IconCountEditor::getCount(IconType::Special);
-        PATCH_MOV("_ZN11GameManager12countForTypeE8IconType", 0x78);
+    if (auto it = iconCounts.find(IconType::Special); it != iconCounts.end()) {
+        PATCH_MOV("GameManager::countForType(IconType)", "_ZN11GameManager12countForTypeE8IconType", 0x78);
     }
-    if (IconCountEditor::hasType(IconType::ShipFire)) {
-        auto count = IconCountEditor::getCount(IconType::ShipFire);
-        PATCH_MOV("_ZN11GameManager12countForTypeE8IconType", 0x80);
+    if (auto it = iconCounts.find(IconType::ShipFire); it != iconCounts.end()) {
+        PATCH_MOV("GameManager::countForType(IconType)", "_ZN11GameManager12countForTypeE8IconType", 0x80);
     }
+    if (failCount > 0) return Err();
+    else return Ok();
 }
+#else
+Result<void, void> IconCountEditor::patch() {}
 #endif
