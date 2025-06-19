@@ -626,5 +626,7 @@ Result<void, void> IconCountEditor::patch() {
     else return Ok();
 }
 #else
-Result<void, void> IconCountEditor::patch() {}
+Result<void, void> IconCountEditor::patch() {
+    return Ok();
+}
 #endif
