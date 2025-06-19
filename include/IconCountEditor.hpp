@@ -36,6 +36,4 @@ public:
             default: return 0;
         }
     }
-
-    static geode::Result<> patch();
 };

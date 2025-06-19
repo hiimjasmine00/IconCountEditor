@@ -48,7 +48,7 @@ class $modify(ICEGameManager, GameManager) {
             m_iconLoadCounts[i] = 0;
         }
         setupGameAnimations();
-        m_chk = ((float)rand() / RAND_MAX) * 1000000.0f + floorf(m_playerUserID.value() / 10000.0f);
+        m_chk = ((float)rand() / (float)RAND_MAX) * 1000000.0f + floorf(m_playerUserID.value() / 10000.0f);
         return true;
     }
     #else
@@ -158,7 +158,7 @@ class $modify(ICEPlayerObject, PlayerObject) {
         m_maybeSavedPlayerFrame = player;
         m_ghostType = GhostType::Disabled;
         m_playerSpeed = 0.9f;
-        m_playerSpeedAC = ((float)rand() / RAND_MAX) * 10.0f + 5.0f;
+        m_playerSpeedAC = ((float)rand() / (float)RAND_MAX) * 10.0f + 5.0f;
         m_gameLayer = gameLayer;
         m_parentLayer = layer;
         m_playEffects = playLayer;
@@ -332,7 +332,13 @@ class $modify(ICEPlayerObject, PlayerObject) {
         m_defaultMiniIcon = gm->getGameVariable("0060");
         m_swapColors = gm->getGameVariable("0061");
         m_switchDashFireColor = gm->getGameVariable("0062");
+        #ifndef GEODE_IS_ANDROID // I simply cannot believe this
         m_playerFollowFloats.resize(200, 0);
+        #else
+        auto oldSize = m_playerFollowFloats.size();
+        m_playerFollowFloats.resize(200);
+        if (oldSize < 200) std::fill(m_playerFollowFloats.begin() + oldSize, m_playerFollowFloats.end(), 0.0f);
+        #endif
 
         updateCheckpointMode(false);
 
