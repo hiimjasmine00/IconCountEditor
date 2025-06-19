@@ -44,40 +44,25 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup CPM Cache
-        uses: actions/cache@v4
+      - name: Checkout bindings
+        uses: actions/checkout@v4
         with:
-          path: ${{ github.workspace }}/cpm-cache
-          key: cpm-${{ matrix.config.id }}-v1-${{ hashFiles('**/CMakeLists.txt', '**/*.cmake') }}
-          restore-keys: |
-            cpm-${{ matrix.config.id }}-v1-
+          repository: geode-sdk/bindings
+          ref: main
+          path: bindings
 
-      - name: Setup CLI
-        uses: geode-sdk/cli/.github/actions/setup@main
+      - name: Checkout geode
+        uses: actions/checkout@v4
         with:
-          version: latest
+          repository: geode-sdk/geode
+          ref: v4.5.0
+          path: geode
 
-      - name: Setup Geode SDK
+      - name: Set variables
         shell: bash
         run: |
-          export CLI_PROFILE="${{ github.workspace }}/cli-profile"
-          # for windows
-          mkdir -p "$CLI_PROFILE/geode/mods"
-          # for mac
-          mkdir -p "$CLI_PROFILE/Contents/geode/mods"
-          geode profile add --name GithubActions "$CLI_PROFILE/GeometryDash.exe" win
-
-          geode sdk install "${{ github.workspace }}/geode-sdk-clone"
-
-          # silly github actions wont refresh the env
-          export GEODE_SDK="${{ github.workspace }}/geode-sdk-clone"
-          echo "GEODE_SDK=$GEODE_SDK" >> $GITHUB_ENV
-
-          geode sdk update stable
-          geode sdk install-binaries --platform ${{ matrix.config.id }}
-          
-          export CPM_CACHE="${{ github.workspace }}/cpm-cache"
-          echo "CPM_SOURCE_CACHE=$CPM_CACHE" >> $GITHUB_ENV
+          echo "GEODE_SDK=${{ github.workspace }}/geode" >> $GITHUB_ENV
+          echo "GEODE_BINDINGS_REPO_PATH=${{ github.workspace }}/bindings" >> $GITHUB_ENV
 
       - name: Configure and Build
         shell: bash
