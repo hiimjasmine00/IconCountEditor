@@ -52,6 +52,11 @@ jobs:
           restore-keys: |
             cpm-${{ matrix.config.id }}-v1-
 
+      - name: Setup CLI
+        uses: geode-sdk/cli/.github/actions/setup@main
+        with:
+          version: latest
+
       - name: Setup Geode SDK
         shell: bash
         run: |
