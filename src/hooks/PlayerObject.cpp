@@ -1,0 +1,411 @@
+#include "../IconCountEditor.hpp"
+#include <Geode/binding/GameManager.hpp>
+#include <Geode/binding/GameStatsManager.hpp>
+#include <Geode/binding/GJActionManager.hpp>
+#include <Geode/binding/PlayerFireBoostSprite.hpp>
+#include <Geode/modify/PlayerObject.hpp>
+
+using namespace geode::prelude;
+
+class $modify(ICEPlayerObject, PlayerObject) {
+    static void onModify(ModifyBase<ModifyDerive<ICEPlayerObject, PlayerObject>>& self) {
+        auto& counts = IconCountEditor::getCounts();
+        if (auto found = self.m_hooks.find("PlayerObject::init"); found != self.m_hooks.end()) {
+            auto& hook = found->second;
+            hook->setAutoEnable(counts[IconType::Cube].second || counts[IconType::Ship].second);
+            hook->setPriority(Priority::Replace);
+        }
+        if (auto found = self.m_hooks.find("PlayerObject::updatePlayerFrame"); found != self.m_hooks.end()) {
+            auto& hook = found->second;
+            hook->setAutoEnable(counts[IconType::Cube].second);
+            hook->setPriority(Priority::Replace);
+        }
+        if (auto found = self.m_hooks.find("PlayerObject::updatePlayerShipFrame"); found != self.m_hooks.end()) {
+            auto& hook = found->second;
+            hook->setAutoEnable(counts[IconType::Ship].second);
+            hook->setPriority(Priority::Replace);
+        }
+        if (auto found = self.m_hooks.find("PlayerObject::updatePlayerRollFrame"); found != self.m_hooks.end()) {
+            auto& hook = found->second;
+            hook->setAutoEnable(counts[IconType::Ball].second);
+            hook->setPriority(Priority::Replace);
+        }
+        if (auto found = self.m_hooks.find("PlayerObject::updatePlayerBirdFrame"); found != self.m_hooks.end()) {
+            auto& hook = found->second;
+            hook->setAutoEnable(counts[IconType::Ufo].second);
+            hook->setPriority(Priority::Replace);
+        }
+        if (auto found = self.m_hooks.find("PlayerObject::updatePlayerDartFrame"); found != self.m_hooks.end()) {
+            auto& hook = found->second;
+            hook->setAutoEnable(counts[IconType::Wave].second);
+            hook->setPriority(Priority::Replace);
+        }
+        #ifndef GEODE_IS_WINDOWS
+        if (auto found = self.m_hooks.find("PlayerObject::updatePlayerRobotFrame"); found != self.m_hooks.end()) {
+            auto& hook = found->second;
+            hook->setAutoEnable(counts[IconType::Robot].second);
+            hook->setPriority(Priority::Replace);
+        }
+        if (auto found = self.m_hooks.find("PlayerObject::updatePlayerSpiderFrame"); found != self.m_hooks.end()) {
+            auto& hook = found->second;
+            hook->setAutoEnable(counts[IconType::Spider].second);
+            hook->setPriority(Priority::Replace);
+        }
+        #endif
+        if (auto found = self.m_hooks.find("PlayerObject::updatePlayerSwingFrame"); found != self.m_hooks.end()) {
+            auto& hook = found->second;
+            hook->setAutoEnable(counts[IconType::Swing].second);
+            hook->setPriority(Priority::Replace);
+        }
+        if (auto found = self.m_hooks.find("PlayerObject::updatePlayerJetpackFrame"); found != self.m_hooks.end()) {
+            auto& hook = found->second;
+            hook->setAutoEnable(counts[IconType::Jetpack].second);
+            hook->setPriority(Priority::Replace);
+        }
+    }
+
+    bool init(int player, int ship, GJBaseGameLayer* gameLayer, cocos2d::CCLayer* layer, bool playLayer) {
+        auto& counts = IconCountEditor::getCounts();
+        player = std::clamp(player, 1, counts[IconType::Cube].first);
+        ship = std::clamp(ship, 1, counts[IconType::Ship].first);
+
+        auto gm = GameManager::get();
+        m_iconRequestID = gm->getIconRequestID();
+        gm->loadIcon(player, 0, m_iconRequestID);
+        gm->loadIcon(ship, 1, m_iconRequestID);
+
+        if (!GameObject::init(fmt::format("player_{:02}_001.png", player).c_str())) return false;
+
+        m_bUnkBool2 = false;
+        m_bDontDraw = true;
+        m_mainLayer = CCNode::create();
+        m_mainLayer->setContentSize({ 0.0f, 0.0f });
+        addChild(m_mainLayer);
+
+        m_currentRobotAnimation = "run";
+        m_switchWaveTrailColor = gm->getGameVariable("0096");
+        m_practiceDeathEffect = gm->getGameVariable("0100");
+        m_gv0123 = gm->getGameVariable("0123");
+
+        auto gsm = GameStatsManager::get();
+        m_robotAnimation1Enabled = gsm->isItemEnabled(UnlockType::GJItem, 18);
+        m_robotAnimation2Enabled = gsm->isItemEnabled(UnlockType::GJItem, 19);
+        m_spiderAnimationEnabled = gsm->isItemEnabled(UnlockType::GJItem, 20);
+        m_maybeSavedPlayerFrame = player;
+        m_ghostType = GhostType::Disabled;
+        m_playerSpeed = 0.9f;
+        m_playerSpeedAC = IconCountEditor::random() * 10.0 + 5.0;
+        m_gameLayer = gameLayer;
+        m_parentLayer = layer;
+        m_playEffects = playLayer;
+        m_maybeCanRunIntoBlocks = !playLayer;
+        m_touchingRings = CCArray::create();
+        m_touchingRings->retain();
+        setTextureRect({ 0.0f, 0.0f, 0.0f, 0.0f });
+
+        auto sfc = CCSpriteFrameCache::get();
+
+        m_iconSprite = CCSprite::create();
+        m_iconSprite->setDisplayFrame(sfc->spriteFrameByName(fmt::format("player_{:02}_001.png", player).c_str()));
+        m_mainLayer->addChild(m_iconSprite, 1);
+        m_iconSpriteSecondary = CCSprite::create();
+        m_iconSpriteSecondary->setDisplayFrame(sfc->spriteFrameByName(fmt::format("player_{:02}_2_001.png", player).c_str()));
+        m_iconSpriteSecondary->setPosition(m_iconSprite->convertToNodeSpace({ 0.0f, 0.0f }));
+        m_iconSprite->addChild(m_iconSpriteSecondary, -1);
+        m_iconSpriteWhitener = CCSprite::create();
+        m_iconSpriteWhitener->setDisplayFrame(sfc->spriteFrameByName(fmt::format("player_{:02}_2_001.png", player).c_str()));
+        m_iconSpriteWhitener->setPosition(m_iconSprite->convertToNodeSpace({ 0.0f, 0.0f }));
+        m_iconSprite->addChild(m_iconSpriteWhitener, 2);
+        updatePlayerSpriteExtra(fmt::format("player_{:02}_extra_001.png", player));
+
+        m_vehicleSprite = CCSprite::create();
+        m_vehicleSprite->setDisplayFrame(sfc->spriteFrameByName(fmt::format("ship_{:02}_001.png", ship).c_str()));
+        m_vehicleSprite->setVisible(false);
+        m_mainLayer->addChild(m_vehicleSprite, 2);
+        m_vehicleSpriteSecondary = CCSprite::create();
+        m_vehicleSpriteSecondary->setDisplayFrame(sfc->spriteFrameByName(fmt::format("ship_{:02}_2_001.png", ship).c_str()));
+        m_vehicleSpriteSecondary->setPosition(m_vehicleSprite->convertToNodeSpace({ 0.0f, 0.0f }));
+        m_vehicleSprite->addChild(m_vehicleSpriteSecondary, -1);
+        m_birdVehicle = CCSprite::create();
+        m_birdVehicle->setDisplayFrame(sfc->spriteFrameByName(fmt::format("ship_{:02}_2_001.png", ship).c_str()));
+        m_birdVehicle->setPosition(m_vehicleSprite->convertToNodeSpace({ 0.0f, 0.0f }));
+        m_birdVehicle->setVisible(false);
+        m_vehicleSprite->addChild(m_birdVehicle, -2);
+        m_vehicleSpriteWhitener = CCSprite::create();
+        m_vehicleSpriteWhitener->setDisplayFrame(sfc->spriteFrameByName(fmt::format("ship_{:02}_2_001.png", ship).c_str()));
+        m_vehicleSpriteWhitener->setPosition(m_vehicleSprite->convertToNodeSpace({ 0.0f, 0.0f }));
+        m_vehicleSprite->addChild(m_vehicleSpriteWhitener, 1);
+        updateShipSpriteExtra(fmt::format("ship_{:02}_extra_001.png", ship));
+
+        createRobot(gm->m_playerRobot.value());
+        m_robotFire = PlayerFireBoostSprite::create();
+        m_robotFire->setVisible(false);
+        m_mainLayer->addChild(m_robotFire, -1);
+        createSpider(gm->m_playerSpider.value());
+
+        m_swingFireMiddle = PlayerFireBoostSprite::create();
+        m_swingFireMiddle->setVisible(false);
+        m_swingFireMiddle->setRotation(90.0f);
+        m_swingFireMiddle->setPosition({ -14.0f, 0.0f });
+        m_swingFireMiddle->m_size = 0.96f;
+        m_mainLayer->addChild(m_swingFireMiddle, -1);
+
+        m_swingFireBottom = PlayerFireBoostSprite::create();
+        m_swingFireBottom->setVisible(false);
+        m_swingFireBottom->setRotation(45.0f);
+        m_swingFireBottom->setPosition({ -9.5f, -10.0f });
+        m_swingFireBottom->m_size = 0.72f;
+        m_mainLayer->addChild(m_swingFireBottom, -1);
+
+        m_swingFireTop = PlayerFireBoostSprite::create();
+        m_swingFireTop->setVisible(false);
+        m_swingFireTop->setRotation(135.0f);
+        m_swingFireTop->setPosition({ -9.5f, 10.0f });
+        m_swingFireTop->m_size = 0.72f;
+        m_mainLayer->addChild(m_swingFireTop, -1);
+
+        setYVelocity(0.0, 51);
+        m_maybeIsBoosted = false;
+        m_isDead = false;
+        m_isOnGround = false;
+        m_isOnGround2 = false;
+        m_vehicleSize = 1.0f;
+        m_unkAngle1 = 30.0f;
+        updateTimeMod(0.9f, false);
+
+        m_pendingCheckpoint = nullptr;
+        m_maybeLastGroundObject = CCNode::create();
+        m_collisionLogTop = CCDictionary::create();
+        m_collisionLogTop->retain();
+        m_collisionLogBottom = CCDictionary::create();
+        m_collisionLogBottom->retain();
+        m_collisionLogLeft = CCDictionary::create();
+        m_collisionLogLeft->retain();
+        m_collisionLogRight = CCDictionary::create();
+        m_collisionLogRight->retain();
+        m_particleSystems = CCArray::create();
+        m_particleSystems->retain();
+        m_actionManager = GJActionManager::create();
+        m_actionManager->retain();
+        m_playerGroundParticles = CCParticleSystemQuad::create("dragEffect.plist", false);
+        m_playerGroundParticles->setPositionType(kCCPositionTypeRelative);
+        m_playerGroundParticles->stopSystem();
+        m_particleSystems->addObject(m_playerGroundParticles);
+        m_hasGroundParticles = false;
+        m_dashParticles = CCParticleSystemQuad::create("dashEffect.plist", false);
+        m_dashParticles->setPositionType(kCCPositionTypeRelative);
+        m_dashParticles->stopSystem();
+        m_particleSystems->addObject(m_dashParticles);
+        m_ufoClickParticles = CCParticleSystemQuad::create("burstEffect.plist", false);
+        m_ufoClickParticles->setPositionType(kCCPositionTypeRelative);
+        m_ufoClickParticles->stopSystem();
+        m_particleSystems->addObject(m_ufoClickParticles);
+        m_robotBurstParticles = CCParticleSystemQuad::create("burstEffect2.plist", false);
+        m_robotBurstParticles->setPositionType(kCCPositionTypeRelative);
+        m_robotBurstParticles->stopSystem();
+        m_particleSystems->addObject(m_robotBurstParticles);
+        m_trailingParticles = CCParticleSystemQuad::create("dragEffect.plist", false);
+        m_trailingParticles->setPosVar({ 0.0f, 2.0f });
+        m_trailingParticles->setSpeed(m_trailingParticles->getSpeed() * 0.2f);
+        m_trailingParticles->setSpeedVar(m_trailingParticles->getSpeedVar() * 0.2f);
+        m_trailingParticles->setStartColor({ 1.0f, 100.0f / 255.0f, 0.0f, 1.0f });
+        m_trailingParticles->setEndColor({ 1.0f, 0.0f, 0.0f, 1.0f });
+        m_trailingParticles->setPositionType(kCCPositionTypeRelative);
+        m_trailingParticles->stopSystem();
+        m_particleSystems->addObject(m_trailingParticles);
+        m_trailingParticleLife = m_trailingParticles->getLife();
+        m_shipClickParticles = CCParticleSystemQuad::create("dragEffect.plist", false);
+        m_shipClickParticles->setPosVar({ 0.0f, 2.0f });
+        m_shipClickParticles->setAngleVar(m_shipClickParticles->getAngleVar() * 2.0f);
+        m_shipClickParticles->setSpeed(m_shipClickParticles->getSpeed() * 2.0f);
+        m_shipClickParticles->setSpeedVar(m_shipClickParticles->getSpeedVar() * 2.0f);
+        m_shipClickParticles->setStartSize(m_shipClickParticles->getStartSize() * 1.5f);
+        m_shipClickParticles->setStartSizeVar(m_shipClickParticles->getStartSizeVar() * 1.5f);
+        m_shipClickParticles->setStartColor({ 1.0f, 190.0f / 255.0f, 0.0f, 1.0f });
+        m_shipClickParticles->setEndColor({ 1.0f, 0.0f, 0.0f, 1.0f });
+        m_shipClickParticles->setPositionType(kCCPositionTypeRelative);
+        m_shipClickParticles->stopSystem();
+        m_particleSystems->addObject(m_shipClickParticles);
+        m_hasShipParticles = false;
+        m_swingBurstParticles1 = CCParticleSystemQuad::create("swingBurstEffect.plist", false);
+        m_swingBurstParticles1->setStartColor({ 1.0f, 100.0f / 255.0f, 0.0f, 1.0f });
+        m_swingBurstParticles1->setEndColor({ 1.0f, 0.0f, 0.0f, 1.0f });
+        m_swingBurstParticles1->setPositionType(kCCPositionTypeGrouped);
+        m_swingBurstParticles1->stopSystem();
+        m_particleSystems->addObject(m_swingBurstParticles1);
+        m_swingBurstParticles2 = CCParticleSystemQuad::create("swingBurstEffect.plist", false);
+        m_swingBurstParticles2->setStartColor({ 1.0f, 100.0f / 255.0f, 0.0f, 1.0f });
+        m_swingBurstParticles2->setEndColor({ 1.0f, 0.0f, 0.0f, 1.0f });
+        m_swingBurstParticles2->setPositionType(kCCPositionTypeGrouped);
+        m_swingBurstParticles2->stopSystem();
+        m_particleSystems->addObject(m_swingBurstParticles2);
+        m_vehicleGroundParticles = CCParticleSystemQuad::create("shipDragEffect.plist", false);
+        m_vehicleGroundParticles->setPositionType(kCCPositionTypeGrouped);
+        m_vehicleGroundParticles->stopSystem();
+        m_particleSystems->addObject(m_vehicleGroundParticles);
+        m_landParticles0 = CCParticleSystemQuad::create("landEffect.plist", false);
+        m_landParticles0->setPositionType(kCCPositionTypeGrouped);
+        m_landParticles0->stopSystem();
+        m_particleSystems->addObject(m_landParticles0);
+        m_landParticlesAngle = m_landParticles0->getAngle();
+        m_landParticleRelatedY = m_landParticles0->getGravity().y;
+        m_landParticles1 = CCParticleSystemQuad::create("landEffect.plist", false);
+        m_landParticles1->setPositionType(kCCPositionTypeGrouped);
+        m_landParticles1->stopSystem();
+        m_particleSystems->addObject(m_landParticles1);
+
+        setupStreak();
+
+        m_dashSpritesContainer = CCSprite::create();
+        m_dashSpritesContainer->setTextureRect({ 0.0f, 0.0f, 0.0f, 0.0f });
+        m_dashSpritesContainer->setDontDraw(true);
+        m_mainLayer->addChild(m_dashSpritesContainer, -1);
+        m_dashFireSprite = CCSprite::createWithSpriteFrameName("playerDash2_001.png");
+        m_dashFireSprite->setBlendFunc({ GL_SRC_ALPHA, GL_ONE });
+        m_dashFireSprite->setPosition(m_dashSpritesContainer->convertToNodeSpace({ 0.0f, 0.0f }));
+        m_dashFireSprite->setVisible(false);
+        m_dashSpritesContainer->addChild(m_dashFireSprite);
+        auto dashOutlineSprite = CCSprite::createWithSpriteFrameName("playerDash2_outline_001.png");
+        dashOutlineSprite->setPosition(m_dashFireSprite->convertToNodeSpace({ 0.0f, 0.0f }));
+        dashOutlineSprite->setOpacity(150);
+        m_dashFireSprite->addChild(dashOutlineSprite, 1);
+
+        m_iconGlow = CCSprite::create();
+        m_iconGlow->setDisplayFrame(sfc->spriteFrameByName(fmt::format("player_{:02}_glow_001.png", player).c_str()));
+        m_iconGlow->setVisible(false);
+        m_dashSpritesContainer->addChild(m_iconGlow, 2);
+        m_vehicleGlow = CCSprite::create();
+        m_vehicleGlow->setDisplayFrame(sfc->spriteFrameByName(fmt::format("ship_{:02}_glow_001.png", ship).c_str()));
+        m_vehicleGlow->setVisible(false);
+        m_dashSpritesContainer->addChild(m_vehicleGlow, -3);
+
+        m_width = 30.0f;
+        m_height = 30.0f;
+        m_unkAngle1 = 30.0f;
+        m_defaultMiniIcon = gm->getGameVariable("0060");
+        m_swapColors = gm->getGameVariable("0061");
+        m_switchDashFireColor = gm->getGameVariable("0062");
+        #ifndef GEODE_IS_ANDROID // I simply cannot believe this
+        m_playerFollowFloats.resize(200, 0.0f);
+        #else
+        auto oldSize = m_playerFollowFloats.size();
+        m_playerFollowFloats.resize(200);
+        if (oldSize < 200) std::fill(m_playerFollowFloats.begin() + oldSize, m_playerFollowFloats.end(), 0.0f);
+        #endif
+
+        updateCheckpointMode(false);
+
+        return true;
+    }
+
+    void updatePlayerFrame(int id) {
+        id = std::clamp(id, 1, IconCountEditor::getCount(IconType::Cube));
+        if (id > 0) m_maybeSavedPlayerFrame = id;
+
+        auto gm = GameManager::get();
+        gm->loadIcon(id, 0, m_iconRequestID);
+
+        auto sfc = CCSpriteFrameCache::get();
+        m_iconSprite->setDisplayFrame(sfc->spriteFrameByName(fmt::format("player_{:02}_001.png", id).c_str()));
+        m_iconSpriteSecondary->setDisplayFrame(sfc->spriteFrameByName(fmt::format("player_{:02}_2_001.png", id).c_str()));
+        m_iconGlow->setDisplayFrame(sfc->spriteFrameByName(fmt::format("player_{:02}_glow_001.png", id).c_str()));
+        m_iconSpriteSecondary->setPosition(m_iconSprite->getContentSize() / 2.0f);
+        updatePlayerSpriteExtra(fmt::format("player_{:02}_extra_001.png", id));
+    }
+
+    void updatePlayerShipFrame(int id) {
+        id = std::clamp(id, 1, IconCountEditor::getCount(IconType::Ship));
+
+        auto gm = GameManager::get();
+        gm->loadIcon(id, 1, m_iconRequestID);
+
+        auto sfc = CCSpriteFrameCache::get();
+        m_vehicleSprite->setDisplayFrame(sfc->spriteFrameByName(fmt::format("ship_{:02}_001.png", id).c_str()));
+        m_vehicleSpriteSecondary->setDisplayFrame(sfc->spriteFrameByName(fmt::format("ship_{:02}_2_001.png", id).c_str()));
+        m_vehicleGlow->setDisplayFrame(sfc->spriteFrameByName(fmt::format("ship_{:02}_glow_001.png", id).c_str()));
+        m_vehicleSpriteSecondary->setPosition(m_vehicleSprite->getContentSize() / 2.0f);
+        updateShipSpriteExtra(fmt::format("ship_{:02}_extra_001.png", id));
+    }
+
+    void updatePlayerRollFrame(int id) {
+        id = std::clamp(id, 1, IconCountEditor::getCount(IconType::Ball));
+
+        auto gm = GameManager::get();
+        gm->loadIcon(id, 2, m_iconRequestID);
+
+        auto sfc = CCSpriteFrameCache::get();
+        m_iconSprite->setDisplayFrame(sfc->spriteFrameByName(fmt::format("player_ball_{:02}_001.png", id).c_str()));
+        m_iconSpriteSecondary->setDisplayFrame(sfc->spriteFrameByName(fmt::format("player_ball_{:02}_2_001.png", id).c_str()));
+        m_iconGlow->setDisplayFrame(sfc->spriteFrameByName(fmt::format("player_ball_{:02}_glow_001.png", id).c_str()));
+        m_iconSpriteSecondary->setPosition(m_iconSprite->getContentSize() / 2.0f);
+        updatePlayerSpriteExtra(fmt::format("player_ball_{:02}_extra_001.png", id));
+    }
+
+    void updatePlayerBirdFrame(int id) {
+        id = std::clamp(id, 1, IconCountEditor::getCount(IconType::Ufo));
+
+        auto gm = GameManager::get();
+        gm->loadIcon(id, 3, m_iconRequestID);
+
+        auto sfc = CCSpriteFrameCache::get();
+        m_vehicleSprite->setDisplayFrame(sfc->spriteFrameByName(fmt::format("bird_{:02}_001.png", id).c_str()));
+        m_vehicleSpriteSecondary->setDisplayFrame(sfc->spriteFrameByName(fmt::format("bird_{:02}_2_001.png", id).c_str()));
+        m_birdVehicle->setDisplayFrame(sfc->spriteFrameByName(fmt::format("bird_{:02}_3_001.png", id).c_str()));
+        m_vehicleGlow->setDisplayFrame(sfc->spriteFrameByName(fmt::format("bird_{:02}_glow_001.png", id).c_str()));
+        m_vehicleSpriteSecondary->setPosition(m_vehicleSprite->getContentSize() / 2.0f);
+        m_birdVehicle->setPosition(m_vehicleSpriteSecondary->getPosition());
+        updateShipSpriteExtra(fmt::format("bird_{:02}_extra_001.png", id));
+    }
+
+    void updatePlayerDartFrame(int id) {
+        id = std::clamp(id, 1, IconCountEditor::getCount(IconType::Wave));
+
+        auto gm = GameManager::get();
+        gm->loadIcon(id, 4, m_iconRequestID);
+
+        auto sfc = CCSpriteFrameCache::get();
+        m_iconSprite->setDisplayFrame(sfc->spriteFrameByName(fmt::format("dart_{:02}_001.png", id).c_str()));
+        m_iconSpriteSecondary->setDisplayFrame(sfc->spriteFrameByName(fmt::format("dart_{:02}_2_001.png", id).c_str()));
+        m_iconGlow->setDisplayFrame(sfc->spriteFrameByName(fmt::format("dart_{:02}_glow_001.png", id).c_str()));
+        m_iconSpriteSecondary->setPosition(m_iconSprite->getContentSize() / 2.0f);
+        updatePlayerSpriteExtra(fmt::format("dart_{:02}_extra_001.png", id));
+    }
+
+    #ifndef GEODE_IS_WINDOWS // Inlined into MenuGameLayer::resetPlayer on Windows
+    void updatePlayerRobotFrame(int id) {
+        createRobot(std::clamp(id, 1, IconCountEditor::getCount(IconType::Robot)));
+    }
+
+    void updatePlayerSpiderFrame(int id) {
+        createSpider(std::clamp(id, 1, IconCountEditor::getCount(IconType::Spider)));
+    }
+    #endif
+
+    void updatePlayerSwingFrame(int id) {
+        id = std::clamp(id, 1, IconCountEditor::getCount(IconType::Swing));
+
+        auto gm = GameManager::get();
+        gm->loadIcon(id, 7, m_iconRequestID);
+
+        auto sfc = CCSpriteFrameCache::get();
+        m_iconSprite->setDisplayFrame(sfc->spriteFrameByName(fmt::format("swing_{:02}_001.png", id).c_str()));
+        m_iconSpriteSecondary->setDisplayFrame(sfc->spriteFrameByName(fmt::format("swing_{:02}_2_001.png", id).c_str()));
+        m_iconGlow->setDisplayFrame(sfc->spriteFrameByName(fmt::format("swing_{:02}_glow_001.png", id).c_str()));
+        m_iconSpriteSecondary->setPosition(m_iconSprite->getContentSize() / 2.0f);
+        updatePlayerSpriteExtra(fmt::format("swing_{:02}_extra_001.png", id));
+    }
+
+    void updatePlayerJetpackFrame(int id) {
+        id = std::clamp(id, 1, IconCountEditor::getCount(IconType::Jetpack));
+
+        auto gm = GameManager::get();
+        gm->loadIcon(id, 8, m_iconRequestID);
+
+        auto sfc = CCSpriteFrameCache::get();
+        m_vehicleSprite->setDisplayFrame(sfc->spriteFrameByName(fmt::format("jetpack_{:02}_001.png", id).c_str()));
+        m_vehicleSpriteSecondary->setDisplayFrame(sfc->spriteFrameByName(fmt::format("jetpack_{:02}_2_001.png", id).c_str()));
+        m_vehicleGlow->setDisplayFrame(sfc->spriteFrameByName(fmt::format("jetpack_{:02}_glow_001.png", id).c_str()));
+        m_vehicleSpriteSecondary->setPosition(m_vehicleSprite->getContentSize() / 2.0f);
+        updateShipSpriteExtra(fmt::format("jetpack_{:02}_extra_001.png", id));
+    }
+};

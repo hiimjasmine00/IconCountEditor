@@ -1,0 +1,152 @@
+{
+    "geode": "4.8.0",
+    "gd": {
+        "win": "2.2074",
+        "android": "2.2074",
+        "mac": "2.2074",
+        "ios": "2.2074"
+    },
+    "id": "_aaahiimjasmine00.icon_count_editor",
+    "name": "Icon Count Editor",
+    "version": "v1.0.0",
+    "developer": "hiimjasmine00",
+    "description": "Allows you to edit the game's icon counts.",
+    "early-load": true,
+    "dependencies": {
+        "hiimjasmine00.optional_settings": ">=v1.0.0"
+    },
+    "settings": {
+        "cubes": {
+            "name": "Cubes",
+            "description": "The number of cubes.",
+            "type": "custom:hiimjasmine00.optional_settings/optional-int",
+            "requires-restart": true,
+            "default": 485,
+            "default-enabled": false,
+            "min": 1,
+            "max": 65535
+        },
+        "ships": {
+            "name": "Ships",
+            "description": "The number of ships.",
+            "type": "custom:hiimjasmine00.optional_settings/optional-int",
+            "requires-restart": true,
+            "default": 169,
+            "default-enabled": false,
+            "min": 1,
+            "max": 65535
+        },
+        "balls": {
+            "name": "Balls",
+            "description": "The number of balls.",
+            "type": "custom:hiimjasmine00.optional_settings/optional-int",
+            "requires-restart": true,
+            "default": 118,
+            "default-enabled": false,
+            "min": 1,
+            "max": 65535
+        },
+        "ufos": {
+            "name": "UFOs",
+            "description": "The number of UFOs.",
+            "type": "custom:hiimjasmine00.optional_settings/optional-int",
+            "requires-restart": true,
+            "default": 149,
+            "default-enabled": false,
+            "min": 1,
+            "max": 65535
+        },
+        "waves": {
+            "name": "Waves",
+            "description": "The number of waves.",
+            "type": "custom:hiimjasmine00.optional_settings/optional-int",
+            "requires-restart": true,
+            "default": 96,
+            "default-enabled": false,
+            "min": 1,
+            "max": 65535
+        },
+        "robots": {
+            "name": "Robots",
+            "description": "The number of robots.",
+            "type": "custom:hiimjasmine00.optional_settings/optional-int",
+            "requires-restart": true,
+            "default": 68,
+            "default-enabled": false,
+            "min": 1,
+            "max": 65535
+        },
+        "spiders": {
+            "name": "Spiders",
+            "description": "The number of spiders.",
+            "type": "custom:hiimjasmine00.optional_settings/optional-int",
+            "requires-restart": true,
+            "default": 69,
+            "default-enabled": false,
+            "min": 1,
+            "max": 65535
+        },
+        "swings": {
+            "name": "Swings",
+            "description": "The number of swings.",
+            "type": "custom:hiimjasmine00.optional_settings/optional-int",
+            "requires-restart": true,
+            "default": 43,
+            "default-enabled": false,
+            "min": 1,
+            "max": 65535
+        },
+        "jetpacks": {
+            "name": "Jetpacks",
+            "description": "The number of jetpacks.",
+            "type": "custom:hiimjasmine00.optional_settings/optional-int",
+            "requires-restart": true,
+            "default": 8,
+            "default-enabled": false,
+            "min": 1,
+            "max": 65535
+        },
+        "death-effects": {
+            "name": "Death Effects",
+            "description": "The number of death effects.",
+            "type": "custom:hiimjasmine00.optional_settings/optional-int",
+            "requires-restart": true,
+            "default": 20,
+            "default-enabled": false,
+            "min": 1,
+            "max": 24
+        },
+        "trails": {
+            "name": "Trails",
+            "description": "The number of trails.",
+            "type": "custom:hiimjasmine00.optional_settings/optional-int",
+            "requires-restart": true,
+            "default": 7,
+            "default-enabled": false,
+            "min": 1,
+            "max": 12
+        },
+        "ship-fires": {
+            "name": "Ship Fires",
+            "description": "The number of ship fires.",
+            "type": "custom:hiimjasmine00.optional_settings/optional-int",
+            "requires-restart": true,
+            "default": 6,
+            "default-enabled": false,
+            "min": 1,
+            "max": 12
+        }
+    },
+    "links": {
+        "community": "https://discord.gg/QVKmbvBXA7",
+        "source": "https://github.com/hiimjasmine00/IconCountEditor",
+        "homepage": "https://www.hiimjasmine00.com"
+    },
+    "tags": [
+        "api",
+        "customization",
+        "enhancement",
+        "offline",
+        "utility"
+    ]
+}

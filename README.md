@@ -1,32 +1,20 @@
 # Icon Count Editor
-A C++ library for editing icon counts in Geometry Dash.
+Allows you to edit the game's icon counts.
 
-**Note: This library is only for use in mods created with the [Geode SDK](https://github.com/geode-sdk/geode).**
-
-## Inclusion
-If you have CPM, you can include this library by adding the following to your `CMakeLists.txt`:
-```cmake
-CPMAddPackage("gh:hiimjasmine00/icon-count-editor#commit-hash")
-
-target_link_libraries(${PROJECT_NAME} icon-count-editor)
-```
-
-## Usage
-Here is an example of how to use Icon Count Editor in your mod:
-```cpp
-// Include the header file
-#include <IconCountEditor.hpp>
-
-// Initialize icon counts
-$execute {
-    // Edit icon counts
-    IconCountEditor::edit(IconType::Cube, 500);
-    IconCountEditor::edit(IconType::Ship, 200);
-    IconCountEditor::edit(IconType::Robot, 100);
-    // Patch the game
-    IconCountEditor::patch();
-}
-```
+## Features
+- Editable icon counts, which can be changed in the mod settings
+  - Cube
+  - Ship
+  - Ball
+  - UFO
+  - Wave
+  - Robot
+  - Spider
+  - Swing
+  - Jetpack
+  - Death Effect
+  - Trail
+  - Ship Fire
 
 ## License
-This project is licensed under the [MIT License](./LICENSE).
+This mod is licensed under the [MIT License](https://github.com/hiimjasmine00/IconCountEditor/blob/main/LICENSE).
