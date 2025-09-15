@@ -423,8 +423,9 @@ class $modify(ICEPlayerObject, PlayerObject) {
     void setupStreak() {
         auto gm = GameManager::get();
         auto textureCache = CCTextureCache::get();
+        auto& counts = IconCountEditor::getCounts();
 
-        m_playerStreak = std::clamp(gm->m_playerStreak.value(), 1, IconCountEditor::getCount(IconType::Special));
+        m_playerStreak = std::clamp(gm->m_playerStreak.value(), 1, counts[IconType::Special].first);
         m_hasGlow = gm->m_playerGlow;
         m_streakStrokeWidth = 10.0f;
         auto fade = 0.3f;
@@ -474,7 +475,7 @@ class $modify(ICEPlayerObject, PlayerObject) {
 
         auto shipFire = gm->m_playerShipFire.value();
         m_shipStreakType = (ShipStreak)shipFire;
-        shipFire = std::clamp(shipFire, 1, IconCountEditor::getCount(IconType::ShipFire));
+        shipFire = std::clamp(shipFire, 1, counts[IconType::ShipFire].first);
         if (shipFire > 1) {
             fade = 0.0f;
             stroke = 0.0f;
