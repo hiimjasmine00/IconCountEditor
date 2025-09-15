@@ -19,7 +19,7 @@ gd::string getFrameForStreak(ShipStreak streak, float dt) {
             hook::createConvention(tulip::hook::TulipConvention::Default),
             tulip::hook::AbstractFunction::from(FunctionType(nullptr))
         }
-    ).unwrap(); // Throw error if fails (Geode does this too ¯\_(ツ)_/¯)
+    ).unwrap(); // Throw error if it fails (Geode does this too ¯\_(ツ)_/¯)
 	return reinterpret_cast<FunctionType>(func)(streak, dt);
 }
 #endif
