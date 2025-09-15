@@ -40,29 +40,22 @@ class $modify(ICESimplePlayer, SimplePlayer) {
 
         gm->loadIcon(id, 0, m_iconRequestID);
 
-        auto sfc = CCSpriteFrameCache::get();
-
-        m_firstLayer = CCSprite::createWithSpriteFrameName(fmt::format("player_{:02}_001.png", id).c_str());
-        if (!m_firstLayer) m_firstLayer = CCSprite::createWithSpriteFrameName("player_01_001.png");
+        m_firstLayer = IconCountEditor::createSprite(fmt::format("player_{:02}_001.png", id), "player_01_001.png");
         addChild(m_firstLayer, 1);
 
-        m_secondLayer = CCSprite::createWithSpriteFrameName(fmt::format("player_{:02}_2_001.png", id).c_str());
-        if (!m_secondLayer) m_secondLayer = CCSprite::createWithSpriteFrameName("player_01_2_001.png");
+        m_secondLayer = IconCountEditor::createSprite(fmt::format("player_{:02}_2_001.png", id), "player_01_2_001.png");
         m_secondLayer->setPosition(m_firstLayer->convertToNodeSpace({ 0.0f, 0.0f }));
         m_firstLayer->addChild(m_secondLayer, -1);
 
-        m_birdDome = CCSprite::createWithSpriteFrameName(fmt::format("player_{:02}_2_001.png", id).c_str());
-        if (!m_birdDome) m_birdDome = CCSprite::createWithSpriteFrameName("player_01_2_001.png");
+        m_birdDome = IconCountEditor::createSprite(fmt::format("player_{:02}_2_001.png", id), "player_01_2_001.png");
         m_birdDome->setPosition(m_firstLayer->convertToNodeSpace({ 0.0f, 0.0f }));
         m_firstLayer->addChild(m_birdDome, -2);
 
-        m_outlineSprite = CCSprite::createWithSpriteFrameName(fmt::format("player_{:02}_glow_001.png", id).c_str());
-        if (!m_outlineSprite) m_outlineSprite = CCSprite::createWithSpriteFrameName("player_01_glow_001.png");
+        m_outlineSprite = IconCountEditor::createSprite(fmt::format("player_{:02}_glow_001.png", id), "player_01_glow_001.png");
         m_outlineSprite->setPosition(m_firstLayer->convertToNodeSpace({ 0.0f, 0.0f }));
         m_firstLayer->addChild(m_outlineSprite, -3);
 
-        m_detailSprite = CCSprite::createWithSpriteFrameName(fmt::format("player_{:02}_2_001.png", id).c_str());
-        if (!m_detailSprite) m_detailSprite = CCSprite::createWithSpriteFrameName("player_01_2_001.png");
+        m_detailSprite = IconCountEditor::createSprite(fmt::format("player_{:02}_2_001.png", id), "player_01_2_001.png");
         m_detailSprite->setPosition(m_firstLayer->convertToNodeSpace({ 0.0f, 0.0f }));
         m_firstLayer->addChild(m_detailSprite, 1);
 

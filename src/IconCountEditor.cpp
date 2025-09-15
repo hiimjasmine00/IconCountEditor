@@ -5,6 +5,14 @@
 using namespace geode::prelude;
 using namespace optional_settings;
 
+CCSprite* IconCountEditor::createSprite(std::string_view frameName, std::string_view fallbackFrameName) {
+    auto sprite = CCSprite::createWithSpriteFrameName(frameName.data());
+    if ((!sprite || sprite->getUserObject("geode.texture-loader/fallback")) && !fallbackFrameName.empty()) {
+        sprite = CCSprite::createWithSpriteFrameName(fallbackFrameName.data());
+    }
+    return sprite;
+}
+
 void loadCount(std::map<IconType, std::pair<int, bool>>& counts, Mod* mod, IconType type, std::string_view id) {
     if (auto count = static_cast<OptionalIntSetting*>(mod->getSetting(id).get())) {
         auto enabled = count->isEnabled();

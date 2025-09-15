@@ -125,36 +125,27 @@ class $modify(ICEPlayerObject, PlayerObject) {
         m_touchingRings->retain();
         setTextureRect({ 0.0f, 0.0f, 0.0f, 0.0f });
 
-        auto sfc = CCSpriteFrameCache::get();
-
-        m_iconSprite = CCSprite::createWithSpriteFrameName(fmt::format("player_{:02}_001.png", player).c_str());
-        if (!m_iconSprite) m_iconSprite = CCSprite::createWithSpriteFrameName("player_01_001.png");
+        m_iconSprite = IconCountEditor::createSprite(fmt::format("player_{:02}_001.png", player), "player_01_001.png");
         m_mainLayer->addChild(m_iconSprite, 1);
-        m_iconSpriteSecondary = CCSprite::createWithSpriteFrameName(fmt::format("player_{:02}_2_001.png", player).c_str());
-        if (!m_iconSpriteSecondary) m_iconSpriteSecondary = CCSprite::createWithSpriteFrameName("player_01_2_001.png");
+        m_iconSpriteSecondary = IconCountEditor::createSprite(fmt::format("player_{:02}_2_001.png", player), "player_01_2_001.png");
         m_iconSpriteSecondary->setPosition(m_iconSprite->convertToNodeSpace({ 0.0f, 0.0f }));
         m_iconSprite->addChild(m_iconSpriteSecondary, -1);
-        m_iconSpriteWhitener = CCSprite::createWithSpriteFrameName(fmt::format("player_{:02}_2_001.png", player).c_str());
-        if (!m_iconSpriteWhitener) m_iconSpriteWhitener = CCSprite::createWithSpriteFrameName("player_01_2_001.png");
+        m_iconSpriteWhitener = IconCountEditor::createSprite(fmt::format("player_{:02}_2_001.png", player), "player_01_2_001.png");
         m_iconSpriteWhitener->setPosition(m_iconSprite->convertToNodeSpace({ 0.0f, 0.0f }));
         m_iconSprite->addChild(m_iconSpriteWhitener, 2);
         updatePlayerSpriteExtra(fmt::format("player_{:02}_extra_001.png", player));
 
-        m_vehicleSprite = CCSprite::createWithSpriteFrameName(fmt::format("ship_{:02}_001.png", ship).c_str());
-        if (!m_vehicleSprite) m_vehicleSprite = CCSprite::createWithSpriteFrameName("ship_01_001.png");
+        m_vehicleSprite = IconCountEditor::createSprite(fmt::format("ship_{:02}_001.png", ship), "ship_01_001.png");
         m_vehicleSprite->setVisible(false);
         m_mainLayer->addChild(m_vehicleSprite, 2);
-        m_vehicleSpriteSecondary = CCSprite::createWithSpriteFrameName(fmt::format("ship_{:02}_2_001.png", ship).c_str());
-        if (!m_vehicleSpriteSecondary) m_vehicleSpriteSecondary = CCSprite::createWithSpriteFrameName("ship_01_2_001.png");
+        m_vehicleSpriteSecondary = IconCountEditor::createSprite(fmt::format("ship_{:02}_2_001.png", ship), "ship_01_2_001.png");
         m_vehicleSpriteSecondary->setPosition(m_vehicleSprite->convertToNodeSpace({ 0.0f, 0.0f }));
         m_vehicleSprite->addChild(m_vehicleSpriteSecondary, -1);
-        m_birdVehicle = CCSprite::createWithSpriteFrameName(fmt::format("ship_{:02}_2_001.png", ship).c_str());
-        if (!m_birdVehicle) m_birdVehicle = CCSprite::createWithSpriteFrameName("ship_01_2_001.png");
+        m_birdVehicle = IconCountEditor::createSprite(fmt::format("ship_{:02}_2_001.png", ship), "ship_01_2_001.png");
         m_birdVehicle->setPosition(m_vehicleSprite->convertToNodeSpace({ 0.0f, 0.0f }));
         m_birdVehicle->setVisible(false);
         m_vehicleSprite->addChild(m_birdVehicle, -2);
-        m_vehicleSpriteWhitener = CCSprite::createWithSpriteFrameName(fmt::format("ship_{:02}_2_001.png", ship).c_str());
-        if (!m_vehicleSpriteWhitener) m_vehicleSpriteWhitener = CCSprite::createWithSpriteFrameName("ship_01_2_001.png");
+        m_vehicleSpriteWhitener = IconCountEditor::createSprite(fmt::format("ship_{:02}_2_001.png", ship), "ship_01_2_001.png");
         m_vehicleSpriteWhitener->setPosition(m_vehicleSprite->convertToNodeSpace({ 0.0f, 0.0f }));
         m_vehicleSprite->addChild(m_vehicleSpriteWhitener, 1);
         updateShipSpriteExtra(fmt::format("ship_{:02}_extra_001.png", ship));
@@ -292,12 +283,10 @@ class $modify(ICEPlayerObject, PlayerObject) {
         dashOutlineSprite->setOpacity(150);
         m_dashFireSprite->addChild(dashOutlineSprite, 1);
 
-        m_iconGlow = CCSprite::createWithSpriteFrameName(fmt::format("player_{:02}_glow_001.png", player).c_str());
-        if (!m_iconGlow) m_iconGlow = CCSprite::createWithSpriteFrameName("player_01_glow_001.png");
+        m_iconGlow = IconCountEditor::createSprite(fmt::format("player_{:02}_glow_001.png", player), "player_01_glow_001.png");
         m_iconGlow->setVisible(false);
         m_dashSpritesContainer->addChild(m_iconGlow, 2);
-        m_vehicleGlow = CCSprite::createWithSpriteFrameName(fmt::format("ship_{:02}_glow_001.png", ship).c_str());
-        if (!m_vehicleGlow) m_vehicleGlow = CCSprite::createWithSpriteFrameName("ship_01_glow_001.png");
+        m_vehicleGlow = IconCountEditor::createSprite(fmt::format("ship_{:02}_glow_001.png", ship), "ship_01_glow_001.png");
         m_vehicleGlow->setVisible(false);
         m_dashSpritesContainer->addChild(m_vehicleGlow, -3);
 
@@ -475,6 +464,13 @@ class $modify(ICEPlayerObject, PlayerObject) {
         m_regularTrail->setBlendFunc({ GL_SRC_ALPHA, GL_ONE });
         if (m_playerStreak == 6) m_regularTrail->enableRepeatMode(0.1f);
         m_parentLayer->addChild(m_regularTrail, -2);
+        queueInMainThread([selfref = WeakRef(this)] {
+            if (auto self = selfref.lock()) {
+                if (!self->m_regularTrail->getTexture()) {
+                    self->m_regularTrail->setTexture(CCTextureCache::get()->addImage("streak_01_001.png", false));
+                }
+            }
+        });
 
         auto shipFire = gm->m_playerShipFire.value();
         m_shipStreakType = (ShipStreak)shipFire;
@@ -505,12 +501,13 @@ class $modify(ICEPlayerObject, PlayerObject) {
                     break;
             }
             texture = textureCache->addImage(getFrameForStreak((ShipStreak)shipFire, 0.0f).c_str(), false);
-            if (!texture) texture = textureCache->addImage(getFrameForStreak(ShipStreak::ShipFire1, 0.0f).c_str(), false);
-            m_shipStreak = CCMotionStreak::create(fade, 1.0f, stroke, { 255, 255, 255 }, texture);
-            m_shipStreak->m_fMaxSeg = 50.0f;
-            m_shipStreak->m_bDontOpacityFade = true;
-            m_shipStreak->setBlendFunc({ GL_SRC_ALPHA, GL_ONE });
-            m_parentLayer->addChild(m_shipStreak, -3);
+            if (texture) {
+                m_shipStreak = CCMotionStreak::create(fade, 1.0f, stroke, { 255, 255, 255 }, texture);
+                m_shipStreak->m_fMaxSeg = 50.0f;
+                m_shipStreak->m_bDontOpacityFade = true;
+                m_shipStreak->setBlendFunc({ GL_SRC_ALPHA, GL_ONE });
+                m_parentLayer->addChild(m_shipStreak, -3);
+            }
         }
 
         m_waveTrail = HardStreak::create();

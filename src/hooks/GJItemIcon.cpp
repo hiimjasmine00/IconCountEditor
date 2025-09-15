@@ -73,11 +73,7 @@ class $modify(ICEItemIcon, GJItemIcon) {
             }
             default: {
                 if (type == UnlockType::GJItem && id > 5 && id < 16) m_player = GJPathSprite::create(id - 5);
-                else {
-                    auto icon = CCSprite::createWithSpriteFrameName(fmt::format("{}_{:02}_001.png", prefix, id).c_str());
-                    if (!icon) icon = CCSprite::createWithSpriteFrameName(fmt::format("{}_01_001.png", prefix).c_str());
-                    m_player = icon;
-                }
+                else m_player = IconCountEditor::createSprite(fmt::format("{}_{:02}_001.png", prefix, id), fmt::format("{}_01_001.png", prefix));
             }
         }
 
