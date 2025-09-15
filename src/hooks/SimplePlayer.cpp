@@ -42,27 +42,27 @@ class $modify(ICESimplePlayer, SimplePlayer) {
 
         auto sfc = CCSpriteFrameCache::get();
 
-        m_firstLayer = CCSprite::create();
-        m_firstLayer->setDisplayFrame(sfc->spriteFrameByName(fmt::format("player_{:02}_001.png", id).c_str()));
+        m_firstLayer = CCSprite::createWithSpriteFrameName(fmt::format("player_{:02}_001.png", id).c_str());
+        if (!m_firstLayer) m_firstLayer = CCSprite::createWithSpriteFrameName("player_01_001.png");
         addChild(m_firstLayer, 1);
 
-        m_secondLayer = CCSprite::create();
-        m_secondLayer->setDisplayFrame(sfc->spriteFrameByName(fmt::format("player_{:02}_2_001.png", id).c_str()));
+        m_secondLayer = CCSprite::createWithSpriteFrameName(fmt::format("player_{:02}_2_001.png", id).c_str());
+        if (!m_secondLayer) m_secondLayer = CCSprite::createWithSpriteFrameName("player_01_2_001.png");
         m_secondLayer->setPosition(m_firstLayer->convertToNodeSpace({ 0.0f, 0.0f }));
         m_firstLayer->addChild(m_secondLayer, -1);
 
-        m_birdDome = CCSprite::create();
-        m_birdDome->setDisplayFrame(sfc->spriteFrameByName(fmt::format("player_{:02}_2_001.png", id).c_str()));
+        m_birdDome = CCSprite::createWithSpriteFrameName(fmt::format("player_{:02}_2_001.png", id).c_str());
+        if (!m_birdDome) m_birdDome = CCSprite::createWithSpriteFrameName("player_01_2_001.png");
         m_birdDome->setPosition(m_firstLayer->convertToNodeSpace({ 0.0f, 0.0f }));
         m_firstLayer->addChild(m_birdDome, -2);
 
-        m_outlineSprite = CCSprite::create();
-        m_outlineSprite->setDisplayFrame(sfc->spriteFrameByName(fmt::format("player_{:02}_glow_001.png", id).c_str()));
+        m_outlineSprite = CCSprite::createWithSpriteFrameName(fmt::format("player_{:02}_glow_001.png", id).c_str());
+        if (!m_outlineSprite) m_outlineSprite = CCSprite::createWithSpriteFrameName("player_01_glow_001.png");
         m_outlineSprite->setPosition(m_firstLayer->convertToNodeSpace({ 0.0f, 0.0f }));
         m_firstLayer->addChild(m_outlineSprite, -3);
 
-        m_detailSprite = CCSprite::create();
-        m_detailSprite->setDisplayFrame(sfc->spriteFrameByName(fmt::format("player_{:02}_2_001.png", id).c_str()));
+        m_detailSprite = CCSprite::createWithSpriteFrameName(fmt::format("player_{:02}_2_001.png", id).c_str());
+        if (!m_detailSprite) m_detailSprite = CCSprite::createWithSpriteFrameName("player_01_2_001.png");
         m_detailSprite->setPosition(m_firstLayer->convertToNodeSpace({ 0.0f, 0.0f }));
         m_firstLayer->addChild(m_detailSprite, 1);
 

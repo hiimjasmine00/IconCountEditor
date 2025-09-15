@@ -2,10 +2,27 @@
 #include <Geode/binding/GameManager.hpp>
 #include <Geode/binding/GameStatsManager.hpp>
 #include <Geode/binding/GJActionManager.hpp>
+#include <Geode/binding/HardStreak.hpp>
 #include <Geode/binding/PlayerFireBoostSprite.hpp>
 #include <Geode/modify/PlayerObject.hpp>
 
 using namespace geode::prelude;
+
+#ifdef GEODE_IS_ANDROID
+gd::string getFrameForStreak(ShipStreak streak, float dt);
+#else
+gd::string getFrameForStreak(ShipStreak streak, float dt) {
+    using FunctionType = gd::string(*)(ShipStreak, float);
+	static auto func = hook::createWrapper(
+        reinterpret_cast<void*>(base::get() + GEODE_WINDOWS(0x3702f0) GEODE_ARM_MAC(0x36a004) GEODE_INTEL_MAC(0x3e7eb0) GEODE_IOS(0x217d98)),
+        {
+            hook::createConvention(tulip::hook::TulipConvention::Default),
+            tulip::hook::AbstractFunction::from(FunctionType(nullptr))
+        }
+    ).unwrap(); // Throw error if fails (Geode does this too ¯\_(ツ)_/¯)
+	return reinterpret_cast<FunctionType>(func)(streak, dt);
+}
+#endif
 
 class $modify(ICEPlayerObject, PlayerObject) {
     static void onModify(ModifyBase<ModifyDerive<ICEPlayerObject, PlayerObject>>& self) {
@@ -62,6 +79,11 @@ class $modify(ICEPlayerObject, PlayerObject) {
             hook->setAutoEnable(counts[IconType::Jetpack].second);
             hook->setPriority(Priority::Replace);
         }
+        if (auto found = self.m_hooks.find("PlayerObject::setupStreak"); found != self.m_hooks.end()) {
+            auto& hook = found->second;
+            hook->setAutoEnable(counts[IconType::Special].second || counts[IconType::ShipFire].second);
+            hook->setPriority(Priority::Replace);
+        }
     }
 
     bool init(int player, int ship, GJBaseGameLayer* gameLayer, cocos2d::CCLayer* layer, bool playLayer) {
@@ -105,34 +127,34 @@ class $modify(ICEPlayerObject, PlayerObject) {
 
         auto sfc = CCSpriteFrameCache::get();
 
-        m_iconSprite = CCSprite::create();
-        m_iconSprite->setDisplayFrame(sfc->spriteFrameByName(fmt::format("player_{:02}_001.png", player).c_str()));
+        m_iconSprite = CCSprite::createWithSpriteFrameName(fmt::format("player_{:02}_001.png", player).c_str());
+        if (!m_iconSprite) m_iconSprite = CCSprite::createWithSpriteFrameName("player_01_001.png");
         m_mainLayer->addChild(m_iconSprite, 1);
-        m_iconSpriteSecondary = CCSprite::create();
-        m_iconSpriteSecondary->setDisplayFrame(sfc->spriteFrameByName(fmt::format("player_{:02}_2_001.png", player).c_str()));
+        m_iconSpriteSecondary = CCSprite::createWithSpriteFrameName(fmt::format("player_{:02}_2_001.png", player).c_str());
+        if (!m_iconSpriteSecondary) m_iconSpriteSecondary = CCSprite::createWithSpriteFrameName("player_01_2_001.png");
         m_iconSpriteSecondary->setPosition(m_iconSprite->convertToNodeSpace({ 0.0f, 0.0f }));
         m_iconSprite->addChild(m_iconSpriteSecondary, -1);
-        m_iconSpriteWhitener = CCSprite::create();
-        m_iconSpriteWhitener->setDisplayFrame(sfc->spriteFrameByName(fmt::format("player_{:02}_2_001.png", player).c_str()));
+        m_iconSpriteWhitener = CCSprite::createWithSpriteFrameName(fmt::format("player_{:02}_2_001.png", player).c_str());
+        if (!m_iconSpriteWhitener) m_iconSpriteWhitener = CCSprite::createWithSpriteFrameName("player_01_2_001.png");
         m_iconSpriteWhitener->setPosition(m_iconSprite->convertToNodeSpace({ 0.0f, 0.0f }));
         m_iconSprite->addChild(m_iconSpriteWhitener, 2);
         updatePlayerSpriteExtra(fmt::format("player_{:02}_extra_001.png", player));
 
-        m_vehicleSprite = CCSprite::create();
-        m_vehicleSprite->setDisplayFrame(sfc->spriteFrameByName(fmt::format("ship_{:02}_001.png", ship).c_str()));
+        m_vehicleSprite = CCSprite::createWithSpriteFrameName(fmt::format("ship_{:02}_001.png", ship).c_str());
+        if (!m_vehicleSprite) m_vehicleSprite = CCSprite::createWithSpriteFrameName("ship_01_001.png");
         m_vehicleSprite->setVisible(false);
         m_mainLayer->addChild(m_vehicleSprite, 2);
-        m_vehicleSpriteSecondary = CCSprite::create();
-        m_vehicleSpriteSecondary->setDisplayFrame(sfc->spriteFrameByName(fmt::format("ship_{:02}_2_001.png", ship).c_str()));
+        m_vehicleSpriteSecondary = CCSprite::createWithSpriteFrameName(fmt::format("ship_{:02}_2_001.png", ship).c_str());
+        if (!m_vehicleSpriteSecondary) m_vehicleSpriteSecondary = CCSprite::createWithSpriteFrameName("ship_01_2_001.png");
         m_vehicleSpriteSecondary->setPosition(m_vehicleSprite->convertToNodeSpace({ 0.0f, 0.0f }));
         m_vehicleSprite->addChild(m_vehicleSpriteSecondary, -1);
-        m_birdVehicle = CCSprite::create();
-        m_birdVehicle->setDisplayFrame(sfc->spriteFrameByName(fmt::format("ship_{:02}_2_001.png", ship).c_str()));
+        m_birdVehicle = CCSprite::createWithSpriteFrameName(fmt::format("ship_{:02}_2_001.png", ship).c_str());
+        if (!m_birdVehicle) m_birdVehicle = CCSprite::createWithSpriteFrameName("ship_01_2_001.png");
         m_birdVehicle->setPosition(m_vehicleSprite->convertToNodeSpace({ 0.0f, 0.0f }));
         m_birdVehicle->setVisible(false);
         m_vehicleSprite->addChild(m_birdVehicle, -2);
-        m_vehicleSpriteWhitener = CCSprite::create();
-        m_vehicleSpriteWhitener->setDisplayFrame(sfc->spriteFrameByName(fmt::format("ship_{:02}_2_001.png", ship).c_str()));
+        m_vehicleSpriteWhitener = CCSprite::createWithSpriteFrameName(fmt::format("ship_{:02}_2_001.png", ship).c_str());
+        if (!m_vehicleSpriteWhitener) m_vehicleSpriteWhitener = CCSprite::createWithSpriteFrameName("ship_01_2_001.png");
         m_vehicleSpriteWhitener->setPosition(m_vehicleSprite->convertToNodeSpace({ 0.0f, 0.0f }));
         m_vehicleSprite->addChild(m_vehicleSpriteWhitener, 1);
         updateShipSpriteExtra(fmt::format("ship_{:02}_extra_001.png", ship));
@@ -270,12 +292,12 @@ class $modify(ICEPlayerObject, PlayerObject) {
         dashOutlineSprite->setOpacity(150);
         m_dashFireSprite->addChild(dashOutlineSprite, 1);
 
-        m_iconGlow = CCSprite::create();
-        m_iconGlow->setDisplayFrame(sfc->spriteFrameByName(fmt::format("player_{:02}_glow_001.png", player).c_str()));
+        m_iconGlow = CCSprite::createWithSpriteFrameName(fmt::format("player_{:02}_glow_001.png", player).c_str());
+        if (!m_iconGlow) m_iconGlow = CCSprite::createWithSpriteFrameName("player_01_glow_001.png");
         m_iconGlow->setVisible(false);
         m_dashSpritesContainer->addChild(m_iconGlow, 2);
-        m_vehicleGlow = CCSprite::create();
-        m_vehicleGlow->setDisplayFrame(sfc->spriteFrameByName(fmt::format("ship_{:02}_glow_001.png", ship).c_str()));
+        m_vehicleGlow = CCSprite::createWithSpriteFrameName(fmt::format("ship_{:02}_glow_001.png", ship).c_str());
+        if (!m_vehicleGlow) m_vehicleGlow = CCSprite::createWithSpriteFrameName("ship_01_glow_001.png");
         m_vehicleGlow->setVisible(false);
         m_dashSpritesContainer->addChild(m_vehicleGlow, -3);
 
@@ -407,5 +429,94 @@ class $modify(ICEPlayerObject, PlayerObject) {
         m_vehicleGlow->setDisplayFrame(sfc->spriteFrameByName(fmt::format("jetpack_{:02}_glow_001.png", id).c_str()));
         m_vehicleSpriteSecondary->setPosition(m_vehicleSprite->getContentSize() / 2.0f);
         updateShipSpriteExtra(fmt::format("jetpack_{:02}_extra_001.png", id));
+    }
+
+    void setupStreak() {
+        auto gm = GameManager::get();
+        auto textureCache = CCTextureCache::get();
+
+        m_playerStreak = std::clamp(gm->m_playerStreak.value(), 1, IconCountEditor::getCount(IconType::Special));
+        m_hasGlow = gm->m_playerGlow;
+        m_streakStrokeWidth = 10.0f;
+        auto fade = 0.3f;
+        auto stroke = 10.0f;
+        switch (m_playerStreak) {
+            case 2:
+            case 7:
+                stroke = 14.0f;
+                m_disableStreakTint = true;
+                m_streakStrokeWidth = 14.0f;
+                break;
+            case 3:
+                m_streakStrokeWidth = 8.5f;
+                stroke = 8.5f;
+                break;
+            case 4:
+                fade = 0.4f;
+                stroke = 10.0f;
+                break;
+            case 5:
+                m_streakStrokeWidth = 5.0f;
+                fade = 0.6f;
+                m_alwaysShowStreak = true;
+                stroke = 5.0f;
+                break;
+            case 6:
+                fade = 1.0f;
+                m_alwaysShowStreak = true;
+                m_streakStrokeWidth = 3.0f;
+                stroke = 3.0f;
+                break;
+        }
+        auto texture = textureCache->addImage(fmt::format("streak_{:02}_001.png", m_playerStreak).c_str(), false);
+        if (!texture) texture = textureCache->addImage("streak_01_001.png", false);
+        m_regularTrail = CCMotionStreak::create(fade, 5.0f, stroke, { 255, 255, 255 }, texture);
+        m_regularTrail->m_fMaxSeg = 50.0f;
+        m_regularTrail->setBlendFunc({ GL_SRC_ALPHA, GL_ONE });
+        if (m_playerStreak == 6) m_regularTrail->enableRepeatMode(0.1f);
+        m_parentLayer->addChild(m_regularTrail, -2);
+
+        auto shipFire = gm->m_playerShipFire.value();
+        m_shipStreakType = (ShipStreak)shipFire;
+        shipFire = std::clamp(shipFire, 1, IconCountEditor::getCount(IconType::ShipFire));
+        if (shipFire > 1) {
+            fade = 0.0f;
+            stroke = 0.0f;
+            switch (shipFire) {
+                case 2:
+                    fade = 0.0636f;
+                    stroke = 22.0f;
+                    break;
+                case 3:
+                    fade = 0.1278f;
+                    stroke = 28.599998f;
+                    break;
+                case 4:
+                    fade = 0.105000004f;
+                    stroke = 28.599998f;
+                    break;
+                case 5:
+                    fade = 0.09f;
+                    stroke = 18.7f;
+                    break;
+                case 6:
+                    fade = 0.096f;
+                    stroke = 27.0f;
+                    break;
+            }
+            texture = textureCache->addImage(getFrameForStreak((ShipStreak)shipFire, 0.0f).c_str(), false);
+            if (!texture) texture = textureCache->addImage(getFrameForStreak(ShipStreak::ShipFire1, 0.0f).c_str(), false);
+            m_shipStreak = CCMotionStreak::create(fade, 1.0f, stroke, { 255, 255, 255 }, texture);
+            m_shipStreak->m_fMaxSeg = 50.0f;
+            m_shipStreak->m_bDontOpacityFade = true;
+            m_shipStreak->setBlendFunc({ GL_SRC_ALPHA, GL_ONE });
+            m_parentLayer->addChild(m_shipStreak, -3);
+        }
+
+        m_waveTrail = HardStreak::create();
+        if (gm->m_playerColor.value() == 15 && !m_switchWaveTrailColor) m_waveTrail->m_isSolid = true;
+        else m_waveTrail->setBlendFunc({ GL_SRC_ALPHA, GL_ONE });
+        m_parentLayer->addChild(m_waveTrail, -3);
+        deactivateStreak(true);
     }
 };
