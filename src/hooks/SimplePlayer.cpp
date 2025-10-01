@@ -40,22 +40,22 @@ class $modify(ICESimplePlayer, SimplePlayer) {
 
         gm->loadIcon(id, 0, m_iconRequestID);
 
-        m_firstLayer = IconCountEditor::createSprite(fmt::format("player_{:02}_001.png", id), "player_01_001.png");
+        m_firstLayer = IconCountEditor::createSprite("player", id);
         addChild(m_firstLayer, 1);
 
-        m_secondLayer = IconCountEditor::createSprite(fmt::format("player_{:02}_2_001.png", id), "player_01_2_001.png");
+        m_secondLayer = IconCountEditor::createSprite("player", id, "_2");
         m_secondLayer->setPosition(m_firstLayer->convertToNodeSpace({ 0.0f, 0.0f }));
         m_firstLayer->addChild(m_secondLayer, -1);
 
-        m_birdDome = IconCountEditor::createSprite(fmt::format("player_{:02}_2_001.png", id), "player_01_2_001.png");
+        m_birdDome = IconCountEditor::createSprite("player", id, "_2");
         m_birdDome->setPosition(m_firstLayer->convertToNodeSpace({ 0.0f, 0.0f }));
         m_firstLayer->addChild(m_birdDome, -2);
 
-        m_outlineSprite = IconCountEditor::createSprite(fmt::format("player_{:02}_glow_001.png", id), "player_01_glow_001.png");
+        m_outlineSprite = IconCountEditor::createSprite("player", id, "_glow");
         m_outlineSprite->setPosition(m_firstLayer->convertToNodeSpace({ 0.0f, 0.0f }));
         m_firstLayer->addChild(m_outlineSprite, -3);
 
-        m_detailSprite = IconCountEditor::createSprite(fmt::format("player_{:02}_2_001.png", id), "player_01_2_001.png");
+        m_detailSprite = IconCountEditor::createSprite("player", id, "_2");
         m_detailSprite->setPosition(m_firstLayer->convertToNodeSpace({ 0.0f, 0.0f }));
         m_firstLayer->addChild(m_detailSprite, 1);
 
@@ -93,7 +93,7 @@ class $modify(ICESimplePlayer, SimplePlayer) {
             return;
         }
 
-        auto prefix = prefixes[(int)type];
+        auto prefix = type >= IconType::Cube && type <= IconType::Jetpack ? prefixes[(int)type] : "player_";
         setFrames(
             fmt::format("{}{:02}_001.png", prefix, id).c_str(),
             fmt::format("{}{:02}_2_001.png", prefix, id).c_str(),

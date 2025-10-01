@@ -58,22 +58,22 @@ class $modify(ICEPlayLayer, PlayLayer) {
         auto deathEffect = gm->m_playerDeathEffect.value();
         if (deathEffect > 0) {
             deathEffect = std::clamp(deathEffect, 1, IconCountEditor::getCount(IconType::DeathEffect));
-            if (gm->m_loadedDeathEffect == deathEffect) return;
+            if (gm->m_loadedDeathEffect != deathEffect) {
+                auto pngPath = fmt::format("PlayerExplosion_{:02}.png", deathEffect - 1);
+                auto plistPath = fmt::format("PlayerExplosion_{:02}.plist", deathEffect - 1);
 
-            auto pngPath = fmt::format("PlayerExplosion_{:02}.png", deathEffect);
-            auto plistPath = fmt::format("PlayerExplosion_{:02}.plist", deathEffect);
+                auto fileUtils = CCFileUtils::get();
+                if (!fileUtils->isFileExist(pngPath) || !fileUtils->isFileExist(plistPath)) deathEffect = 1;
 
-            auto fileUtils = CCFileUtils::get();
-            if (!fileUtils->isFileExist(pngPath) || !fileUtils->isFileExist(plistPath)) return;
-
-            auto textureCache = CCTextureCache::get();
-            if (gm->m_loadedDeathEffect > 1) {
-                textureCache->removeTextureForKey(fmt::format("PlayerExplosion_{:02}.png", gm->m_loadedDeathEffect - 1).c_str());
+                auto textureCache = CCTextureCache::get();
+                if (gm->m_loadedDeathEffect > 1) {
+                    textureCache->removeTextureForKey(fmt::format("PlayerExplosion_{:02}.png", gm->m_loadedDeathEffect - 1).c_str());
+                }
+                if (deathEffect > 1) {
+                    CCSpriteFrameCache::get()->addSpriteFramesWithFile(plistPath.c_str(), textureCache->addImage(pngPath.c_str(), false));
+                }
+                gm->m_loadedDeathEffect = deathEffect;
             }
-            if (deathEffect > 1) {
-                CCSpriteFrameCache::get()->addSpriteFramesWithFile(plistPath.c_str(), textureCache->addImage(pngPath.c_str(), false));
-            }
-            gm->m_loadedDeathEffect = deathEffect;
         }
 
         createBackground(m_levelSettings->m_backgroundIndex);

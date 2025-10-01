@@ -104,11 +104,11 @@ class $modify(ICEGameManager, GameManager) {
         id = std::clamp(id, 1, IconCountEditor::getCount(IconType::DeathEffect));
         if (m_loadedDeathEffect == id) return;
 
-        auto pngPath = fmt::format("PlayerExplosion_{:02}.png", id);
-        auto plistPath = fmt::format("PlayerExplosion_{:02}.plist", id);
+        auto pngPath = fmt::format("PlayerExplosion_{:02}.png", id - 1);
+        auto plistPath = fmt::format("PlayerExplosion_{:02}.plist", id - 1);
 
         auto fileUtils = CCFileUtils::get();
-        if (!fileUtils->isFileExist(pngPath) || !fileUtils->isFileExist(plistPath)) return;
+        if (!fileUtils->isFileExist(pngPath) || !fileUtils->isFileExist(plistPath)) id = 1;
 
         auto textureCache = CCTextureCache::get();
         if (m_loadedDeathEffect > 1) {

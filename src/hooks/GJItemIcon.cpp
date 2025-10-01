@@ -33,7 +33,7 @@ class $modify(ICEItemIcon, GJItemIcon) {
             "robot", "spider", "player_special", "explosionIcon",
             "gjItem", "swing", "jetpack", "shipfireIcon"
         };
-        auto prefix = prefixes[(int)type - 1];
+        auto prefix = type >= UnlockType::Cube && type <= UnlockType::ShipFire ? prefixes[(int)type - 1] : "player";
         switch (type) {
             case UnlockType::Cube:
             case UnlockType::Ship:
@@ -72,8 +72,12 @@ class $modify(ICEItemIcon, GJItemIcon) {
                 break;
             }
             default: {
-                if (type == UnlockType::GJItem && id > 5 && id < 16) m_player = GJPathSprite::create(id - 5);
-                else m_player = IconCountEditor::createSprite(fmt::format("{}_{:02}_001.png", prefix, id), fmt::format("{}_01_001.png", prefix));
+                if (type == UnlockType::GJItem && id > 5 && id < 16) {
+                    m_player = GJPathSprite::create(id - 5);
+                }
+                else {
+                    m_player = IconCountEditor::createSprite(prefix, id);
+                }
             }
         }
 

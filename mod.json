@@ -1,5 +1,5 @@
 {
-    "geode": "4.8.0",
+    "geode": "4.9.0",
     "gd": {
         "win": "2.2074",
         "android": "2.2074",
@@ -12,6 +12,7 @@
     "developer": "hiimjasmine00",
     "description": "Allows you to edit the game's icon counts.",
     "early-load": true,
+    "load-priority": -1,
     "dependencies": {
         "hiimjasmine00.optional_settings": ">=v1.0.0"
     },

@@ -11,13 +11,13 @@ using namespace geode::prelude;
 #ifdef GEODE_IS_ANDROID
 gd::string getFrameForStreak(ShipStreak streak, float dt);
 #else
-gd::string getFrameForStreak(ShipStreak streak, float dt) {
-    using FunctionType = gd::string(*)(ShipStreak, float);
+std::string getFrameForStreak(ShipStreak streak, float dt) {
+    using FunctionType = std::string(*)(ShipStreak, float);
 	static auto func = hook::createWrapper(
         reinterpret_cast<void*>(base::get() + GEODE_WINDOWS(0x3702f0) GEODE_ARM_MAC(0x36a004) GEODE_INTEL_MAC(0x3e7eb0) GEODE_IOS(0x217d98)),
         {
-            hook::createConvention(tulip::hook::TulipConvention::Default),
-            tulip::hook::AbstractFunction::from(FunctionType(nullptr))
+            .m_convention = hook::createConvention(tulip::hook::TulipConvention::Default),
+            .m_abstract = tulip::hook::AbstractFunction::from(FunctionType(nullptr))
         }
     ).unwrap(); // Throw error if it fails (Geode does this too ¯\_(ツ)_/¯)
 	return reinterpret_cast<FunctionType>(func)(streak, dt);
@@ -125,27 +125,27 @@ class $modify(ICEPlayerObject, PlayerObject) {
         m_touchingRings->retain();
         setTextureRect({ 0.0f, 0.0f, 0.0f, 0.0f });
 
-        m_iconSprite = IconCountEditor::createSprite(fmt::format("player_{:02}_001.png", player), "player_01_001.png");
+        m_iconSprite = IconCountEditor::createSprite("player", player);
         m_mainLayer->addChild(m_iconSprite, 1);
-        m_iconSpriteSecondary = IconCountEditor::createSprite(fmt::format("player_{:02}_2_001.png", player), "player_01_2_001.png");
+        m_iconSpriteSecondary = IconCountEditor::createSprite("player", player, "_2");
         m_iconSpriteSecondary->setPosition(m_iconSprite->convertToNodeSpace({ 0.0f, 0.0f }));
         m_iconSprite->addChild(m_iconSpriteSecondary, -1);
-        m_iconSpriteWhitener = IconCountEditor::createSprite(fmt::format("player_{:02}_2_001.png", player), "player_01_2_001.png");
+        m_iconSpriteWhitener = IconCountEditor::createSprite("player", player, "_2");
         m_iconSpriteWhitener->setPosition(m_iconSprite->convertToNodeSpace({ 0.0f, 0.0f }));
         m_iconSprite->addChild(m_iconSpriteWhitener, 2);
         updatePlayerSpriteExtra(fmt::format("player_{:02}_extra_001.png", player));
 
-        m_vehicleSprite = IconCountEditor::createSprite(fmt::format("ship_{:02}_001.png", ship), "ship_01_001.png");
+        m_vehicleSprite = IconCountEditor::createSprite("ship", ship);
         m_vehicleSprite->setVisible(false);
         m_mainLayer->addChild(m_vehicleSprite, 2);
-        m_vehicleSpriteSecondary = IconCountEditor::createSprite(fmt::format("ship_{:02}_2_001.png", ship), "ship_01_2_001.png");
+        m_vehicleSpriteSecondary = IconCountEditor::createSprite("ship", ship, "_2");
         m_vehicleSpriteSecondary->setPosition(m_vehicleSprite->convertToNodeSpace({ 0.0f, 0.0f }));
         m_vehicleSprite->addChild(m_vehicleSpriteSecondary, -1);
-        m_birdVehicle = IconCountEditor::createSprite(fmt::format("ship_{:02}_2_001.png", ship), "ship_01_2_001.png");
+        m_birdVehicle = IconCountEditor::createSprite("ship", ship, "_2");
         m_birdVehicle->setPosition(m_vehicleSprite->convertToNodeSpace({ 0.0f, 0.0f }));
         m_birdVehicle->setVisible(false);
         m_vehicleSprite->addChild(m_birdVehicle, -2);
-        m_vehicleSpriteWhitener = IconCountEditor::createSprite(fmt::format("ship_{:02}_2_001.png", ship), "ship_01_2_001.png");
+        m_vehicleSpriteWhitener = IconCountEditor::createSprite("ship", ship, "_2");
         m_vehicleSpriteWhitener->setPosition(m_vehicleSprite->convertToNodeSpace({ 0.0f, 0.0f }));
         m_vehicleSprite->addChild(m_vehicleSpriteWhitener, 1);
         updateShipSpriteExtra(fmt::format("ship_{:02}_extra_001.png", ship));
@@ -283,10 +283,10 @@ class $modify(ICEPlayerObject, PlayerObject) {
         dashOutlineSprite->setOpacity(150);
         m_dashFireSprite->addChild(dashOutlineSprite, 1);
 
-        m_iconGlow = IconCountEditor::createSprite(fmt::format("player_{:02}_glow_001.png", player), "player_01_glow_001.png");
+        m_iconGlow = IconCountEditor::createSprite("player", player, "_glow");
         m_iconGlow->setVisible(false);
         m_dashSpritesContainer->addChild(m_iconGlow, 2);
-        m_vehicleGlow = IconCountEditor::createSprite(fmt::format("ship_{:02}_glow_001.png", ship), "ship_01_glow_001.png");
+        m_vehicleGlow = IconCountEditor::createSprite("ship", ship, "_glow");
         m_vehicleGlow->setVisible(false);
         m_dashSpritesContainer->addChild(m_vehicleGlow, -3);
 

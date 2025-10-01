@@ -1,20 +1,20 @@
 #include "IconCountEditor.hpp"
-#include <Geode/loader/Mod.hpp>
+#include <Geode/loader/ModSettingsManager.hpp>
 #include <hiimjasmine00.optional_settings/include/OptionalIntSetting.hpp>
 
 using namespace geode::prelude;
 using namespace optional_settings;
 
-CCSprite* IconCountEditor::createSprite(std::string_view frameName, std::string_view fallbackFrameName) {
-    auto sprite = CCSprite::createWithSpriteFrameName(frameName.data());
-    if ((!sprite || sprite->getUserObject("geode.texture-loader/fallback")) && !fallbackFrameName.empty()) {
-        sprite = CCSprite::createWithSpriteFrameName(fallbackFrameName.data());
+CCSprite* IconCountEditor::createSprite(std::string_view prefix, int id, std::string_view suffix) {
+    auto sprite = CCSprite::createWithSpriteFrameName(fmt::format("{}_{:02}{}_001.png", prefix, id, suffix).c_str());
+    if ((!sprite || sprite->getUserObject("geode.texture-loader/fallback"))) {
+        sprite = CCSprite::createWithSpriteFrameName(fmt::format("{}_01{}_001.png", prefix, suffix).c_str());
     }
     return sprite;
 }
 
-void loadCount(std::map<IconType, std::pair<int, bool>>& counts, Mod* mod, IconType type, std::string_view id) {
-    if (auto count = static_cast<OptionalIntSetting*>(mod->getSetting(id).get())) {
+void loadCount(std::map<IconType, std::pair<int, bool>>& counts, ModSettingsManager* manager, IconType type, std::string_view id) {
+    if (auto count = static_cast<OptionalIntSetting*>(manager->get(id).get())) {
         auto enabled = count->isEnabled();
         counts.emplace(type, std::make_pair(enabled ? count->getStoredValue() : count->getStoredDefaultValue(), enabled));
     }
@@ -23,24 +23,19 @@ void loadCount(std::map<IconType, std::pair<int, bool>>& counts, Mod* mod, IconT
 std::map<IconType, std::pair<int, bool>>& IconCountEditor::getCounts() {
     static std::map<IconType, std::pair<int, bool>> iconCounts = [] {
         std::map<IconType, std::pair<int, bool>> counts;
-        auto mod = Mod::get();
-        if (auto res = mod->registerCustomSettingType("dummy", [](const std::string& key, const std::string& id, const matjson::Value& json) {
-            return Err("Dummy setting type - should never be parsed");
-        }); res.isErr()) {
-            log::logImpl(Severity::Error, mod, "Failed to register dummy setting type: {}", res.unwrapErr());
-        }
-        loadCount(counts, mod, IconType::Cube, "cubes");
-        loadCount(counts, mod, IconType::Ship, "ships");
-        loadCount(counts, mod, IconType::Ball, "balls");
-        loadCount(counts, mod, IconType::Ufo, "ufos");
-        loadCount(counts, mod, IconType::Wave, "waves");
-        loadCount(counts, mod, IconType::Robot, "robots");
-        loadCount(counts, mod, IconType::Spider, "spiders");
-        loadCount(counts, mod, IconType::Swing, "swings");
-        loadCount(counts, mod, IconType::Jetpack, "jetpacks");
-        loadCount(counts, mod, IconType::DeathEffect, "death-effects");
-        loadCount(counts, mod, IconType::Special, "trails");
-        loadCount(counts, mod, IconType::ShipFire, "ship-fires");
+        auto manager = ModSettingsManager::from(getMod());
+        loadCount(counts, manager, IconType::Cube, "cubes");
+        loadCount(counts, manager, IconType::Ship, "ships");
+        loadCount(counts, manager, IconType::Ball, "balls");
+        loadCount(counts, manager, IconType::Ufo, "ufos");
+        loadCount(counts, manager, IconType::Wave, "waves");
+        loadCount(counts, manager, IconType::Robot, "robots");
+        loadCount(counts, manager, IconType::Spider, "spiders");
+        loadCount(counts, manager, IconType::Swing, "swings");
+        loadCount(counts, manager, IconType::Jetpack, "jetpacks");
+        loadCount(counts, manager, IconType::DeathEffect, "death-effects");
+        loadCount(counts, manager, IconType::Special, "trails");
+        loadCount(counts, manager, IconType::ShipFire, "ship-fires");
         return counts;
     }();
     return iconCounts;
