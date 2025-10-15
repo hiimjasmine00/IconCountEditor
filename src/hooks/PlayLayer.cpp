@@ -20,11 +20,8 @@ using namespace geode::prelude;
 
 class $modify(ICEPlayLayer, PlayLayer) {
     static void onModify(ModifyBase<ModifyDerive<ICEPlayLayer, PlayLayer>>& self) {
-        auto& counts = IconCountEditor::getCounts();
         if (auto found = self.m_hooks.find("PlayLayer::setupHasCompleted"); found != self.m_hooks.end()) {
-            auto& hook = found->second;
-            hook->setAutoEnable(counts[IconType::DeathEffect].second);
-            hook->setPriority(Priority::Replace);
+            IconCountEditor::configureHook(found->second.get(), { IconType::DeathEffect });
         }
     }
 
@@ -50,9 +47,11 @@ class $modify(ICEPlayLayer, PlayLayer) {
         auto playerColor1 = m_effectManager->getColorAction(1005);
         playerColor1->m_duration = 0.0f;
         playerColor1->m_fromColor = m_player1->m_playerColor1;
+        playerColor1->m_blending = true;
         auto playerColor2 = m_effectManager->getColorAction(1006);
         playerColor2->m_duration = 0.0f;
         playerColor2->m_fromColor = m_player1->m_playerColor2;
+        playerColor2->m_blending = true;
 
         auto gm = GameManager::get();
         auto deathEffect = gm->m_playerDeathEffect.value();
@@ -82,7 +81,8 @@ class $modify(ICEPlayLayer, PlayLayer) {
 
         m_uiLayer->togglePlatformerMode(m_isPlatformer);
 
-        m_glitterParticles->setStartColor(to4F(to4B(m_player1->m_playerColor1)));
+        auto color = m_player1->m_playerColor1;
+        m_glitterParticles->setStartColor({ color.r / 255.0f, color.g / 255.0f, color.b / 255.0f, 1.0f });
         m_glitterParticles->setEndColor({ 0.0f, 0.0f, 0.0f, 1.0f });
         resetPlayer();
 
@@ -97,7 +97,7 @@ class $modify(ICEPlayLayer, PlayLayer) {
             m_skipAudioStep = true;
             MusicDownloadManager::sharedState()->incrementPriorityForSong(songID);
         }
-        m_isSilent = fae->m_musicVolume <= 0.0f;
+        m_isSilent = fae->getBackgroundMusicVolume() <= 0.0f;
         m_audioEffectsLayer = AudioEffectsLayer::create(LevelTools::getAudioString(m_level->m_audioTrack));
         m_audioEffectsLayer->setVisible(false);
         m_objectLayer->addChild(m_audioEffectsLayer, 1);
@@ -167,8 +167,7 @@ class $modify(ICEPlayLayer, PlayLayer) {
         loadDefaultColors();
         updateLevelColors();
 
-        if (m_startPosObject) setupLevelStart(m_startPosObject->m_startSettings);
-        else setupLevelStart(m_levelSettings);
+        setupLevelStart(m_startPosObject ? m_startPosObject->m_startSettings : m_levelSettings);
 
         m_objectsDeactivated = true;
         updateVisibility(0.0f);

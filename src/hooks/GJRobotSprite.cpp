@@ -8,11 +8,8 @@ using namespace geode::prelude;
 
 class $modify(ICERobotSprite, GJRobotSprite) {
     static void onModify(ModifyBase<ModifyDerive<ICERobotSprite, GJRobotSprite>>& self) {
-        auto& counts = IconCountEditor::getCounts();
         if (auto found = self.m_hooks.find("GJRobotSprite::updateFrame"); found != self.m_hooks.end()) {
-            auto& hook = found->second;
-            hook->setAutoEnable(counts[IconType::Robot].second || counts[IconType::Spider].second);
-            hook->setPriority(Priority::Replace);
+            IconCountEditor::configureHook(found->second.get(), { IconType::Robot, IconType::Spider });
         }
     }
 

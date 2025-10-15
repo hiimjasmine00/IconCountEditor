@@ -8,11 +8,8 @@ using namespace geode::prelude;
 
 class $modify(ICEItemIcon, GJItemIcon) {
     static void onModify(ModifyBase<ModifyDerive<ICEItemIcon, GJItemIcon>>& self) {
-        auto& counts = IconCountEditor::getCounts();
         if (auto found = self.m_hooks.find("GJItemIcon::init"); found != self.m_hooks.end()) {
-            auto& hook = found->second;
-            hook->setAutoEnable(counts[IconType::DeathEffect].second || counts[IconType::Special].second || counts[IconType::ShipFire].second);
-            hook->setPriority(Priority::Replace);
+            IconCountEditor::configureHook(found->second.get(), { IconType::DeathEffect, IconType::Special, IconType::ShipFire });
         }
     }
 
@@ -46,7 +43,9 @@ class $modify(ICEItemIcon, GJItemIcon) {
             case UnlockType::Jetpack: {
                 m_isIcon = true;
                 auto player = SimplePlayer::create(1);
-                player->updatePlayerFrame(id, gm->unlockTypeToIconType((int)type));
+                auto iconType = gm->unlockTypeToIconType((int)type);
+                gm->isIconLoaded(id, (int)iconType);
+                player->updatePlayerFrame(id, iconType);
                 player->setColors(color1, color2);
                 m_playerSize = player->getContentSize();
                 m_player = player;
@@ -76,7 +75,12 @@ class $modify(ICEItemIcon, GJItemIcon) {
                     m_player = GJPathSprite::create(id - 5);
                 }
                 else {
-                    m_player = IconCountEditor::createSprite(prefix, id);
+                    auto sprite = IconCountEditor::createSprite(prefix, id);
+                    if (dark) {
+                        sprite->setColor({ 0, 0, 0 });
+                        sprite->setOpacity(120);
+                    }
+                    m_player = sprite;
                 }
             }
         }

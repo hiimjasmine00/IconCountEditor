@@ -5,55 +5,31 @@ using namespace geode::prelude;
 
 class $modify(ICEGameManager, GameManager) {
     static void onModify(ModifyBase<ModifyDerive<ICEGameManager, GameManager>>& self) {
-        auto& counts = IconCountEditor::getCounts();
         if (auto found = self.m_hooks.find("GameManager::countForType"); found != self.m_hooks.end()) {
-            auto& hook = found->second;
-            hook->setAutoEnable(counts[IconType::Cube].second ||
-                                counts[IconType::Ship].second ||
-                                counts[IconType::Ball].second ||
-                                counts[IconType::Ufo].second ||
-                                counts[IconType::Wave].second ||
-                                counts[IconType::Robot].second ||
-                                counts[IconType::Spider].second ||
-                                counts[IconType::Swing].second ||
-                                counts[IconType::Jetpack].second ||
-                                counts[IconType::DeathEffect].second ||
-                                counts[IconType::Special].second ||
-                                counts[IconType::ShipFire].second);
-            hook->setPriority(Priority::Replace);
+            IconCountEditor::configureHook(found->second.get(), {
+                IconType::Cube, IconType::Ship, IconType::Ball, IconType::Ufo,
+                IconType::Wave, IconType::Robot, IconType::Spider, IconType::Swing,
+                IconType::Jetpack, IconType::DeathEffect, IconType::Special, IconType::ShipFire
+            });
         }
         #ifdef GEODE_IS_WINDOWS
         if (auto found = self.m_hooks.find("GameManager::init"); found != self.m_hooks.end()) {
-            auto& hook = found->second;
-            hook->setAutoEnable(counts[IconType::Cube].second ||
-                                counts[IconType::Ship].second ||
-                                counts[IconType::Ball].second ||
-                                counts[IconType::Ufo].second ||
-                                counts[IconType::Wave].second ||
-                                counts[IconType::Robot].second ||
-                                counts[IconType::Spider].second ||
-                                counts[IconType::Swing].second ||
-                                counts[IconType::Jetpack].second);
-            hook->setPriority(Priority::Replace);
+            IconCountEditor::configureHook(found->second.get(), {
+                IconType::Cube, IconType::Ship, IconType::Ball,
+                IconType::Ufo, IconType::Wave, IconType::Robot,
+                IconType::Spider, IconType::Swing, IconType::Jetpack
+            });
         }
         #else
         if (auto found = self.m_hooks.find("GameManager::calculateBaseKeyForIcons"); found != self.m_hooks.end()) {
-            auto& hook = found->second;
-            hook->setAutoEnable(counts[IconType::Cube].second ||
-                                counts[IconType::Ship].second ||
-                                counts[IconType::Ball].second ||
-                                counts[IconType::Ufo].second ||
-                                counts[IconType::Wave].second ||
-                                counts[IconType::Robot].second ||
-                                counts[IconType::Spider].second ||
-                                counts[IconType::Swing].second ||
-                                counts[IconType::Jetpack].second);
-            hook->setPriority(Priority::Replace);
+            IconCountEditor::configureHook(found->second.get(), {
+                IconType::Cube, IconType::Ship, IconType::Ball,
+                IconType::Ufo, IconType::Wave, IconType::Robot,
+                IconType::Spider, IconType::Swing, IconType::Jetpack
+            });
         }
         if (auto found = self.m_hooks.find("GameManager::loadDeathEffect"); found != self.m_hooks.end()) {
-            auto& hook = found->second;
-            hook->setAutoEnable(counts[IconType::DeathEffect].second);
-            hook->setPriority(Priority::Replace);
+            IconCountEditor::configureHook(found->second.get(), { IconType::DeathEffect });
         }
         #endif
     }
@@ -64,6 +40,7 @@ class $modify(ICEGameManager, GameManager) {
 
     #ifdef GEODE_IS_WINDOWS // Inlined into GameManager::init on Windows
     bool init() {
+        m_fileName = "CCGameManager.dat";
         m_unkBool2 = false;
         m_vsyncEnabled = false;
         m_adTimer = 0.0;
@@ -74,10 +51,9 @@ class $modify(ICEGameManager, GameManager) {
         setup();
         m_keyStartForIcon.resize(9);
         auto count = 0;
-        auto& counts = IconCountEditor::getCounts();
         for (int i = 0; i < 9; i++) {
             m_keyStartForIcon[i] = count;
-            count += counts[(IconType)i].first;
+            count += IconCountEditor::getCount((IconType)i);
         }
         for (int i = 0; i < count; i++) {
             m_iconLoadCounts[i] = 0;
@@ -90,10 +66,9 @@ class $modify(ICEGameManager, GameManager) {
     void calculateBaseKeyForIcons() {
         m_keyStartForIcon.resize(9);
         auto count = 0;
-        auto& counts = IconCountEditor::getCounts();
         for (int i = 0; i < 9; i++) {
             m_keyStartForIcon[i] = count;
-            count += counts[(IconType)i].first;
+            count += IconCountEditor::getCount((IconType)i);
         }
         for (int i = 0; i < count; i++) {
             m_iconLoadCounts[i] = 0;

@@ -1,9 +1,9 @@
 # Icon Count Editor
 Allows you to edit the game's icon counts.\
-**Note: This mod is primarily targeted towards fangame creators who want to add custom icons to their game. For a more user-friendly way to add custom icons, check out my mod [More Icons](https://github.com/hiimjasmine00/MoreIcons).**
+**Note: This mod is primarily targeted towards fangame creators who want to add custom icons to their game. For a more user-friendly way to add custom icons, check out my mod [More Icons](https://geode-sdk.org/mods/hiimjustin000.more_icons).**
 
 ## Features
-- Editable icon counts, which can be changed in the mod settings
+- Editable icon counts, which can be changed in the mod settings:
   - Cube
   - Ship
   - Ball

@@ -10,93 +10,97 @@ using namespace geode::prelude;
 
 #ifdef GEODE_IS_ANDROID
 gd::string getFrameForStreak(ShipStreak streak, float dt);
+void getSettingsForStreak(ShipStreak streak, float speed, float size, float& fade, float& stroke);
 #else
+#ifdef GEODE_IS_WINDOWS
+void* wrapFunction(uintptr_t address, const tulip::hook::WrapperMetadata& metadata) {
+    auto wrapped = hook::createWrapper(reinterpret_cast<void*>(address), metadata);
+    if (wrapped.isErr()) {
+        throw std::runtime_error(wrapped.unwrapErr());
+    }
+    return wrapped.unwrap();
+}
+#else
+void* wrapFunction(uintptr_t address, const tulip::hook::WrapperMetadata& metadata);
+#endif
+
 std::string getFrameForStreak(ShipStreak streak, float dt) {
     using FunctionType = std::string(*)(ShipStreak, float);
-	static auto func = hook::createWrapper(
-        reinterpret_cast<void*>(base::get() + GEODE_WINDOWS(0x3702f0) GEODE_ARM_MAC(0x36a004) GEODE_INTEL_MAC(0x3e7eb0) GEODE_IOS(0x217d98)),
+    static auto func = wrapFunction(
+        base::get() + GEODE_WINDOWS(0x3702f0) GEODE_ARM_MAC(0x36a004) GEODE_INTEL_MAC(0x3e7eb0) GEODE_IOS(0x217d98),
         {
             .m_convention = hook::createConvention(tulip::hook::TulipConvention::Default),
             .m_abstract = tulip::hook::AbstractFunction::from(FunctionType(nullptr))
         }
-    ).unwrap(); // Throw error if it fails (Geode does this too ¯\_(ツ)_/¯)
-	return reinterpret_cast<FunctionType>(func)(streak, dt);
+    );
+    return reinterpret_cast<FunctionType>(func)(streak, dt);
+}
+
+void getSettingsForStreak(ShipStreak streak, float speed, float size, float& fade, float& stroke) {
+    using FunctionType = void(*)(ShipStreak, float, float, float&, float&);
+    static auto func = wrapFunction(
+        base::get() + GEODE_WINDOWS(0x36fe00) GEODE_ARM_MAC(0x369910) GEODE_INTEL_MAC(0x3e7870) GEODE_IOS(0x217864),
+        {
+            .m_convention = hook::createConvention(tulip::hook::TulipConvention::Default),
+            .m_abstract = tulip::hook::AbstractFunction::from(FunctionType(nullptr))
+        }
+    );
+    return reinterpret_cast<FunctionType>(func)(streak, speed, size, fade, stroke);
 }
 #endif
 
 class $modify(ICEPlayerObject, PlayerObject) {
     static void onModify(ModifyBase<ModifyDerive<ICEPlayerObject, PlayerObject>>& self) {
-        auto& counts = IconCountEditor::getCounts();
         if (auto found = self.m_hooks.find("PlayerObject::init"); found != self.m_hooks.end()) {
-            auto& hook = found->second;
-            hook->setAutoEnable(counts[IconType::Cube].second || counts[IconType::Ship].second);
-            hook->setPriority(Priority::Replace);
+            IconCountEditor::configureHook(found->second.get(), { IconType::Cube, IconType::Ship });
         }
         if (auto found = self.m_hooks.find("PlayerObject::updatePlayerFrame"); found != self.m_hooks.end()) {
-            auto& hook = found->second;
-            hook->setAutoEnable(counts[IconType::Cube].second);
-            hook->setPriority(Priority::Replace);
+            IconCountEditor::configureHook(found->second.get(), { IconType::Cube });
         }
         if (auto found = self.m_hooks.find("PlayerObject::updatePlayerShipFrame"); found != self.m_hooks.end()) {
-            auto& hook = found->second;
-            hook->setAutoEnable(counts[IconType::Ship].second);
-            hook->setPriority(Priority::Replace);
+            IconCountEditor::configureHook(found->second.get(), { IconType::Ship });
         }
         if (auto found = self.m_hooks.find("PlayerObject::updatePlayerRollFrame"); found != self.m_hooks.end()) {
-            auto& hook = found->second;
-            hook->setAutoEnable(counts[IconType::Ball].second);
-            hook->setPriority(Priority::Replace);
+            IconCountEditor::configureHook(found->second.get(), { IconType::Ball });
         }
         if (auto found = self.m_hooks.find("PlayerObject::updatePlayerBirdFrame"); found != self.m_hooks.end()) {
-            auto& hook = found->second;
-            hook->setAutoEnable(counts[IconType::Ufo].second);
-            hook->setPriority(Priority::Replace);
+            IconCountEditor::configureHook(found->second.get(), { IconType::Ufo });
         }
         if (auto found = self.m_hooks.find("PlayerObject::updatePlayerDartFrame"); found != self.m_hooks.end()) {
-            auto& hook = found->second;
-            hook->setAutoEnable(counts[IconType::Wave].second);
-            hook->setPriority(Priority::Replace);
+            IconCountEditor::configureHook(found->second.get(), { IconType::Wave });
         }
         #ifndef GEODE_IS_WINDOWS
         if (auto found = self.m_hooks.find("PlayerObject::updatePlayerRobotFrame"); found != self.m_hooks.end()) {
-            auto& hook = found->second;
-            hook->setAutoEnable(counts[IconType::Robot].second);
-            hook->setPriority(Priority::Replace);
+            IconCountEditor::configureHook(found->second.get(), { IconType::Robot });
         }
         if (auto found = self.m_hooks.find("PlayerObject::updatePlayerSpiderFrame"); found != self.m_hooks.end()) {
-            auto& hook = found->second;
-            hook->setAutoEnable(counts[IconType::Spider].second);
-            hook->setPriority(Priority::Replace);
+            IconCountEditor::configureHook(found->second.get(), { IconType::Spider });
         }
         #endif
         if (auto found = self.m_hooks.find("PlayerObject::updatePlayerSwingFrame"); found != self.m_hooks.end()) {
-            auto& hook = found->second;
-            hook->setAutoEnable(counts[IconType::Swing].second);
-            hook->setPriority(Priority::Replace);
+            IconCountEditor::configureHook(found->second.get(), { IconType::Swing });
         }
         if (auto found = self.m_hooks.find("PlayerObject::updatePlayerJetpackFrame"); found != self.m_hooks.end()) {
-            auto& hook = found->second;
-            hook->setAutoEnable(counts[IconType::Jetpack].second);
-            hook->setPriority(Priority::Replace);
+            IconCountEditor::configureHook(found->second.get(), { IconType::Jetpack });
         }
         if (auto found = self.m_hooks.find("PlayerObject::setupStreak"); found != self.m_hooks.end()) {
-            auto& hook = found->second;
-            hook->setAutoEnable(counts[IconType::Special].second || counts[IconType::ShipFire].second);
-            hook->setPriority(Priority::Replace);
+            IconCountEditor::configureHook(found->second.get(), { IconType::Special, IconType::ShipFire });
         }
     }
 
-    bool init(int player, int ship, GJBaseGameLayer* gameLayer, cocos2d::CCLayer* layer, bool playLayer) {
-        auto& counts = IconCountEditor::getCounts();
-        player = std::clamp(player, 1, counts[IconType::Cube].first);
-        ship = std::clamp(ship, 1, counts[IconType::Ship].first);
+    bool init(int player, int ship, GJBaseGameLayer* gameLayer, CCLayer* layer, bool playLayer) {
+        player = std::clamp(player, 1, IconCountEditor::getCount(IconType::Cube));
+        ship = std::clamp(ship, 1, IconCountEditor::getCount(IconType::Ship));
 
         auto gm = GameManager::get();
         m_iconRequestID = gm->getIconRequestID();
         gm->loadIcon(player, 0, m_iconRequestID);
         gm->loadIcon(ship, 1, m_iconRequestID);
 
-        if (!GameObject::init(fmt::format("player_{:02}_001.png", player).c_str())) return false;
+        auto frame = fmt::format("player_{:02}_001.png", player);
+        auto spriteFrame = CCSpriteFrameCache::get()->spriteFrameByName(frame.c_str());
+        if (!spriteFrame || spriteFrame->getTag() == 105871529) frame = "player_01_001.png";
+        if (!GameObject::init(frame.c_str())) return false;
 
         m_bUnkBool2 = false;
         m_bDontDraw = true;
@@ -267,7 +271,7 @@ class $modify(ICEPlayerObject, PlayerObject) {
         m_landParticles1->stopSystem();
         m_particleSystems->addObject(m_landParticles1);
 
-        setupStreak();
+        PlayerObject::setupStreak();
 
         m_dashSpritesContainer = CCSprite::create();
         m_dashSpritesContainer->setTextureRect({ 0.0f, 0.0f, 0.0f, 0.0f });
@@ -296,13 +300,7 @@ class $modify(ICEPlayerObject, PlayerObject) {
         m_defaultMiniIcon = gm->getGameVariable("0060");
         m_swapColors = gm->getGameVariable("0061");
         m_switchDashFireColor = gm->getGameVariable("0062");
-        #ifndef GEODE_IS_ANDROID // I simply cannot believe this
         m_playerFollowFloats.resize(200, 0.0f);
-        #else
-        auto oldSize = m_playerFollowFloats.size();
-        m_playerFollowFloats.resize(200);
-        if (oldSize < 200) std::fill(m_playerFollowFloats.begin() + oldSize, m_playerFollowFloats.end(), 0.0f);
-        #endif
 
         updateCheckpointMode(false);
 
@@ -313,8 +311,7 @@ class $modify(ICEPlayerObject, PlayerObject) {
         id = std::clamp(id, 1, IconCountEditor::getCount(IconType::Cube));
         if (id > 0) m_maybeSavedPlayerFrame = id;
 
-        auto gm = GameManager::get();
-        gm->loadIcon(id, 0, m_iconRequestID);
+        GameManager::get()->loadIcon(id, 0, m_iconRequestID);
 
         auto sfc = CCSpriteFrameCache::get();
         m_iconSprite->setDisplayFrame(sfc->spriteFrameByName(fmt::format("player_{:02}_001.png", id).c_str()));
@@ -327,8 +324,7 @@ class $modify(ICEPlayerObject, PlayerObject) {
     void updatePlayerShipFrame(int id) {
         id = std::clamp(id, 1, IconCountEditor::getCount(IconType::Ship));
 
-        auto gm = GameManager::get();
-        gm->loadIcon(id, 1, m_iconRequestID);
+        GameManager::get()->loadIcon(id, 1, m_iconRequestID);
 
         auto sfc = CCSpriteFrameCache::get();
         m_vehicleSprite->setDisplayFrame(sfc->spriteFrameByName(fmt::format("ship_{:02}_001.png", id).c_str()));
@@ -341,8 +337,7 @@ class $modify(ICEPlayerObject, PlayerObject) {
     void updatePlayerRollFrame(int id) {
         id = std::clamp(id, 1, IconCountEditor::getCount(IconType::Ball));
 
-        auto gm = GameManager::get();
-        gm->loadIcon(id, 2, m_iconRequestID);
+        GameManager::get()->loadIcon(id, 2, m_iconRequestID);
 
         auto sfc = CCSpriteFrameCache::get();
         m_iconSprite->setDisplayFrame(sfc->spriteFrameByName(fmt::format("player_ball_{:02}_001.png", id).c_str()));
@@ -355,8 +350,7 @@ class $modify(ICEPlayerObject, PlayerObject) {
     void updatePlayerBirdFrame(int id) {
         id = std::clamp(id, 1, IconCountEditor::getCount(IconType::Ufo));
 
-        auto gm = GameManager::get();
-        gm->loadIcon(id, 3, m_iconRequestID);
+        GameManager::get()->loadIcon(id, 3, m_iconRequestID);
 
         auto sfc = CCSpriteFrameCache::get();
         m_vehicleSprite->setDisplayFrame(sfc->spriteFrameByName(fmt::format("bird_{:02}_001.png", id).c_str()));
@@ -371,8 +365,7 @@ class $modify(ICEPlayerObject, PlayerObject) {
     void updatePlayerDartFrame(int id) {
         id = std::clamp(id, 1, IconCountEditor::getCount(IconType::Wave));
 
-        auto gm = GameManager::get();
-        gm->loadIcon(id, 4, m_iconRequestID);
+        GameManager::get()->loadIcon(id, 4, m_iconRequestID);
 
         auto sfc = CCSpriteFrameCache::get();
         m_iconSprite->setDisplayFrame(sfc->spriteFrameByName(fmt::format("dart_{:02}_001.png", id).c_str()));
@@ -395,8 +388,7 @@ class $modify(ICEPlayerObject, PlayerObject) {
     void updatePlayerSwingFrame(int id) {
         id = std::clamp(id, 1, IconCountEditor::getCount(IconType::Swing));
 
-        auto gm = GameManager::get();
-        gm->loadIcon(id, 7, m_iconRequestID);
+        GameManager::get()->loadIcon(id, 7, m_iconRequestID);
 
         auto sfc = CCSpriteFrameCache::get();
         m_iconSprite->setDisplayFrame(sfc->spriteFrameByName(fmt::format("swing_{:02}_001.png", id).c_str()));
@@ -409,8 +401,7 @@ class $modify(ICEPlayerObject, PlayerObject) {
     void updatePlayerJetpackFrame(int id) {
         id = std::clamp(id, 1, IconCountEditor::getCount(IconType::Jetpack));
 
-        auto gm = GameManager::get();
-        gm->loadIcon(id, 8, m_iconRequestID);
+        GameManager::get()->loadIcon(id, 8, m_iconRequestID);
 
         auto sfc = CCSpriteFrameCache::get();
         m_vehicleSprite->setDisplayFrame(sfc->spriteFrameByName(fmt::format("jetpack_{:02}_001.png", id).c_str()));
@@ -423,9 +414,8 @@ class $modify(ICEPlayerObject, PlayerObject) {
     void setupStreak() {
         auto gm = GameManager::get();
         auto textureCache = CCTextureCache::get();
-        auto& counts = IconCountEditor::getCounts();
 
-        m_playerStreak = std::clamp(gm->m_playerStreak.value(), 1, counts[IconType::Special].first);
+        m_playerStreak = std::clamp(gm->m_playerStreak.value(), 1, IconCountEditor::getCount(IconType::Special));
         m_hasGlow = gm->m_playerGlow;
         m_streakStrokeWidth = 10.0f;
         auto fade = 0.3f;
@@ -461,7 +451,7 @@ class $modify(ICEPlayerObject, PlayerObject) {
         auto texture = textureCache->addImage(fmt::format("streak_{:02}_001.png", m_playerStreak).c_str(), false);
         if (!texture) texture = textureCache->addImage("streak_01_001.png", false);
         m_regularTrail = CCMotionStreak::create(fade, 5.0f, stroke, { 255, 255, 255 }, texture);
-        m_regularTrail->m_fMaxSeg = 50.0f;
+        m_regularTrail->setM_fMaxSeg(50.0f);
         m_regularTrail->setBlendFunc({ GL_SRC_ALPHA, GL_ONE });
         if (m_playerStreak == 6) m_regularTrail->enableRepeatMode(0.1f);
         m_parentLayer->addChild(m_regularTrail, -2);
@@ -474,38 +464,18 @@ class $modify(ICEPlayerObject, PlayerObject) {
         });
 
         auto shipFire = gm->m_playerShipFire.value();
-        m_shipStreakType = (ShipStreak)shipFire;
-        shipFire = std::clamp(shipFire, 1, counts[IconType::ShipFire].first);
+        auto shipStreak = (ShipStreak)shipFire;
+        m_shipStreakType = shipStreak;
+        shipFire = std::clamp(shipFire, 1, IconCountEditor::getCount(IconType::ShipFire));
         if (shipFire > 1) {
             fade = 0.0f;
             stroke = 0.0f;
-            switch (shipFire) {
-                case 2:
-                    fade = 0.0636f;
-                    stroke = 22.0f;
-                    break;
-                case 3:
-                    fade = 0.1278f;
-                    stroke = 28.599998f;
-                    break;
-                case 4:
-                    fade = 0.105000004f;
-                    stroke = 28.599998f;
-                    break;
-                case 5:
-                    fade = 0.09f;
-                    stroke = 18.7f;
-                    break;
-                case 6:
-                    fade = 0.096f;
-                    stroke = 27.0f;
-                    break;
-            }
-            texture = textureCache->addImage(getFrameForStreak((ShipStreak)shipFire, 0.0f).c_str(), false);
+            getSettingsForStreak(shipStreak, 1.6f, 1.0f, fade, stroke);
+            texture = textureCache->addImage(getFrameForStreak(shipStreak, 0.0f).c_str(), false);
             if (texture) {
                 m_shipStreak = CCMotionStreak::create(fade, 1.0f, stroke, { 255, 255, 255 }, texture);
-                m_shipStreak->m_fMaxSeg = 50.0f;
-                m_shipStreak->m_bDontOpacityFade = true;
+                m_shipStreak->setM_fMaxSeg(50.0f);
+                m_shipStreak->setDontOpacityFade(true);
                 m_shipStreak->setBlendFunc({ GL_SRC_ALPHA, GL_ONE });
                 m_parentLayer->addChild(m_shipStreak, -3);
             }

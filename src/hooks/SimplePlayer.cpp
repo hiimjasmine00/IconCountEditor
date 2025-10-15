@@ -7,24 +7,15 @@ using namespace geode::prelude;
 
 class $modify(ICESimplePlayer, SimplePlayer) {
     static void onModify(ModifyBase<ModifyDerive<ICESimplePlayer, SimplePlayer>>& self) {
-        auto& counts = IconCountEditor::getCounts();
         if (auto found = self.m_hooks.find("SimplePlayer::init"); found != self.m_hooks.end()) {
-            auto& hook = found->second;
-            hook->setAutoEnable(counts[IconType::Cube].second);
-            hook->setPriority(Priority::Replace);
+            IconCountEditor::configureHook(found->second.get(), { IconType::Cube });
         }
         if (auto found = self.m_hooks.find("SimplePlayer::updatePlayerFrame"); found != self.m_hooks.end()) {
-            auto& hook = found->second;
-            hook->setAutoEnable(counts[IconType::Cube].second ||
-                                counts[IconType::Ship].second ||
-                                counts[IconType::Ball].second ||
-                                counts[IconType::Ufo].second ||
-                                counts[IconType::Wave].second ||
-                                counts[IconType::Robot].second ||
-                                counts[IconType::Spider].second ||
-                                counts[IconType::Swing].second ||
-                                counts[IconType::Jetpack].second);
-            hook->setPriority(Priority::Replace);
+            IconCountEditor::configureHook(found->second.get(), {
+                IconType::Cube, IconType::Ship, IconType::Ball,
+                IconType::Ufo, IconType::Wave, IconType::Robot,
+                IconType::Spider, IconType::Swing, IconType::Jetpack
+            });
         }
     }
 

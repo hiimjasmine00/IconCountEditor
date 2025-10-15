@@ -7,25 +7,18 @@ using namespace geode::prelude;
 
 class $modify(ICEMenuGameLayer, MenuGameLayer) {
     static void onModify(ModifyBase<ModifyDerive<ICEMenuGameLayer, MenuGameLayer>>& self) {
-        auto& counts = IconCountEditor::getCounts();
         if (auto found = self.m_hooks.find("MenuGameLayer::resetPlayer"); found != self.m_hooks.end()) {
-            auto& hook = found->second;
-            hook->setAutoEnable(counts[IconType::Cube].second ||
-                                counts[IconType::Ship].second ||
-                                counts[IconType::Ball].second ||
-                                counts[IconType::Ufo].second ||
-                                counts[IconType::Wave].second ||
-                                counts[IconType::Robot].second ||
-                                counts[IconType::Spider].second ||
-                                counts[IconType::Swing].second);
-            hook->setPriority(Priority::Replace);
+            IconCountEditor::configureHook(found->second.get(), {
+                IconType::Cube, IconType::Ship, IconType::Ball, IconType::Ufo,
+                IconType::Wave, IconType::Robot, IconType::Spider, IconType::Swing
+            });
         }
     }
 
     void resetPlayer() {
         m_playerObject->deactivateStreak(true);
         m_playerObject->deactivateParticle();
-        m_playerObject->setPositionX(IconCountEditor::random() * -500.0 - 100.0);
+        m_playerObject->setPosition({ (float)(IconCountEditor::random() * -500.0 - 100.0), m_playerObject->getPosition().y });
         m_playerObject->resetAllParticles();
         m_playerObject->togglePlayerScale(false, false);
         m_playerObject->m_hasGlow = IconCountEditor::random() > 0.8;
@@ -35,30 +28,29 @@ class $modify(ICEMenuGameLayer, MenuGameLayer) {
         m_playerObject->flipGravity(false, false);
         m_playerObject->update(0.0f);
         if (!m_videoOptionsOpen) {
-            auto& counts = IconCountEditor::getCounts();
             auto typeRand = IconCountEditor::random();
             if (typeRand < 0.12 && !m_playerObject->m_isShip) {
                 m_playerObject->toggleFlyMode(true, false);
-                m_playerObject->updatePlayerShipFrame(IconCountEditor::random() * counts[IconType::Ship].first);
-                m_playerObject->updatePlayerFrame(IconCountEditor::random() * counts[IconType::Cube].first);
+                m_playerObject->updatePlayerShipFrame(IconCountEditor::random() * IconCountEditor::getCount(IconType::Ship));
+                m_playerObject->updatePlayerFrame(IconCountEditor::random() * IconCountEditor::getCount(IconType::Cube));
             }
             else if (typeRand < 0.24 && !m_playerObject->m_isBall) {
                 m_playerObject->releaseButton(PlayerButton::Jump);
                 m_playerObject->toggleRollMode(true, false);
-                m_playerObject->updatePlayerRollFrame(IconCountEditor::random() * counts[IconType::Ball].first);
+                m_playerObject->updatePlayerRollFrame(IconCountEditor::random() * IconCountEditor::getCount(IconType::Ball));
             }
             else if (typeRand < 0.36 && !m_playerObject->m_isBird) {
                 m_playerObject->toggleBirdMode(true, false);
-                m_playerObject->updatePlayerBirdFrame(IconCountEditor::random() * counts[IconType::Ufo].first);
-                m_playerObject->updatePlayerFrame(IconCountEditor::random() * counts[IconType::Cube].first);
+                m_playerObject->updatePlayerBirdFrame(IconCountEditor::random() * IconCountEditor::getCount(IconType::Ufo));
+                m_playerObject->updatePlayerFrame(IconCountEditor::random() * IconCountEditor::getCount(IconType::Cube));
             }
             else if (typeRand < 0.48 && !m_playerObject->m_isDart) {
                 m_playerObject->toggleDartMode(true, false);
-                m_playerObject->updatePlayerDartFrame(IconCountEditor::random() * counts[IconType::Wave].first);
+                m_playerObject->updatePlayerDartFrame(IconCountEditor::random() * IconCountEditor::getCount(IconType::Wave));
             }
             else if (typeRand < 0.6 && !m_playerObject->m_isRobot) {
                 m_playerObject->toggleRobotMode(true, false);
-                auto count = counts[IconType::Robot].first;
+                auto count = IconCountEditor::getCount(IconType::Robot);
                 #ifdef GEODE_IS_WINDOWS
                 m_playerObject->createRobot(std::clamp<int>(IconCountEditor::random() * count, 1, count));
                 #else
@@ -68,7 +60,7 @@ class $modify(ICEMenuGameLayer, MenuGameLayer) {
             else if (typeRand < 0.7 && !m_playerObject->m_isSpider) {
                 m_playerObject->releaseButton(PlayerButton::Jump);
                 m_playerObject->toggleSpiderMode(true, false);
-                auto count = counts[IconType::Spider].first;
+                auto count = IconCountEditor::getCount(IconType::Spider);
                 #ifdef GEODE_IS_WINDOWS
                 m_playerObject->createSpider(std::clamp<int>(IconCountEditor::random() * count, 1, count));
                 #else
@@ -78,11 +70,11 @@ class $modify(ICEMenuGameLayer, MenuGameLayer) {
             else if (typeRand < 0.8 && !m_playerObject->m_isSwing) {
                 m_playerObject->releaseButton(PlayerButton::Jump);
                 m_playerObject->toggleSwingMode(true, false);
-                m_playerObject->updatePlayerSwingFrame(IconCountEditor::random() * counts[IconType::Swing].first);
+                m_playerObject->updatePlayerSwingFrame(IconCountEditor::random() * IconCountEditor::getCount(IconType::Swing));
             }
             else {
                 m_playerObject->switchedToMode(GameObjectType::CubePortal);
-                m_playerObject->updatePlayerFrame(IconCountEditor::random() * counts[IconType::Cube].first);
+                m_playerObject->updatePlayerFrame(IconCountEditor::random() * IconCountEditor::getCount(IconType::Cube));
             }
             m_playerObject->togglePlayerScale(IconCountEditor::random() <= 0.1, false);
         }
