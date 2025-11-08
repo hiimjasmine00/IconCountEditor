@@ -20,9 +20,7 @@ using namespace geode::prelude;
 
 class $modify(ICEPlayLayer, PlayLayer) {
     static void onModify(ModifyBase<ModifyDerive<ICEPlayLayer, PlayLayer>>& self) {
-        if (auto found = self.m_hooks.find("PlayLayer::setupHasCompleted"); found != self.m_hooks.end()) {
-            IconCountEditor::configureHook(found->second.get(), { IconType::DeathEffect });
-        }
+        IconCountEditor::modify(self.m_hooks, "PlayLayer::setupHasCompleted", { IconType::DeathEffect });
     }
 
     void setupHasCompleted() {
@@ -56,7 +54,7 @@ class $modify(ICEPlayLayer, PlayLayer) {
         auto gm = GameManager::get();
         auto deathEffect = gm->m_playerDeathEffect.value();
         if (deathEffect > 0) {
-            deathEffect = std::clamp(deathEffect, 1, IconCountEditor::getCount(IconType::DeathEffect));
+            deathEffect = IconCountEditor::clamp(deathEffect, IconType::DeathEffect);
             if (gm->m_loadedDeathEffect != deathEffect) {
                 auto pngPath = fmt::format("PlayerExplosion_{:02}.png", deathEffect - 1);
                 auto plistPath = fmt::format("PlayerExplosion_{:02}.plist", deathEffect - 1);

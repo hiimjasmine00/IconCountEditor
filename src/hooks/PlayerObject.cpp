@@ -5,6 +5,7 @@
 #include <Geode/binding/HardStreak.hpp>
 #include <Geode/binding/PlayerFireBoostSprite.hpp>
 #include <Geode/modify/PlayerObject.hpp>
+#include <jasmine/random.hpp>
 
 using namespace geode::prelude;
 
@@ -51,46 +52,24 @@ void getSettingsForStreak(ShipStreak streak, float speed, float size, float& fad
 
 class $modify(ICEPlayerObject, PlayerObject) {
     static void onModify(ModifyBase<ModifyDerive<ICEPlayerObject, PlayerObject>>& self) {
-        if (auto found = self.m_hooks.find("PlayerObject::init"); found != self.m_hooks.end()) {
-            IconCountEditor::configureHook(found->second.get(), { IconType::Cube, IconType::Ship });
-        }
-        if (auto found = self.m_hooks.find("PlayerObject::updatePlayerFrame"); found != self.m_hooks.end()) {
-            IconCountEditor::configureHook(found->second.get(), { IconType::Cube });
-        }
-        if (auto found = self.m_hooks.find("PlayerObject::updatePlayerShipFrame"); found != self.m_hooks.end()) {
-            IconCountEditor::configureHook(found->second.get(), { IconType::Ship });
-        }
-        if (auto found = self.m_hooks.find("PlayerObject::updatePlayerRollFrame"); found != self.m_hooks.end()) {
-            IconCountEditor::configureHook(found->second.get(), { IconType::Ball });
-        }
-        if (auto found = self.m_hooks.find("PlayerObject::updatePlayerBirdFrame"); found != self.m_hooks.end()) {
-            IconCountEditor::configureHook(found->second.get(), { IconType::Ufo });
-        }
-        if (auto found = self.m_hooks.find("PlayerObject::updatePlayerDartFrame"); found != self.m_hooks.end()) {
-            IconCountEditor::configureHook(found->second.get(), { IconType::Wave });
-        }
+        IconCountEditor::modify(self.m_hooks, "PlayerObject::init", { IconType::Cube, IconType::Ship });
+        IconCountEditor::modify(self.m_hooks, "PlayerObject::updatePlayerFrame", { IconType::Cube });
+        IconCountEditor::modify(self.m_hooks, "PlayerObject::updatePlayerShipFrame", { IconType::Ship });
+        IconCountEditor::modify(self.m_hooks, "PlayerObject::updatePlayerRollFrame", { IconType::Ball });
+        IconCountEditor::modify(self.m_hooks, "PlayerObject::updatePlayerBirdFrame", { IconType::Ufo });
+        IconCountEditor::modify(self.m_hooks, "PlayerObject::updatePlayerDartFrame", { IconType::Wave });
         #ifndef GEODE_IS_WINDOWS
-        if (auto found = self.m_hooks.find("PlayerObject::updatePlayerRobotFrame"); found != self.m_hooks.end()) {
-            IconCountEditor::configureHook(found->second.get(), { IconType::Robot });
-        }
-        if (auto found = self.m_hooks.find("PlayerObject::updatePlayerSpiderFrame"); found != self.m_hooks.end()) {
-            IconCountEditor::configureHook(found->second.get(), { IconType::Spider });
-        }
+        IconCountEditor::modify(self.m_hooks, "PlayerObject::updatePlayerRobotFrame", { IconType::Robot });
+        IconCountEditor::modify(self.m_hooks, "PlayerObject::updatePlayerSpiderFrame", { IconType::Spider });
         #endif
-        if (auto found = self.m_hooks.find("PlayerObject::updatePlayerSwingFrame"); found != self.m_hooks.end()) {
-            IconCountEditor::configureHook(found->second.get(), { IconType::Swing });
-        }
-        if (auto found = self.m_hooks.find("PlayerObject::updatePlayerJetpackFrame"); found != self.m_hooks.end()) {
-            IconCountEditor::configureHook(found->second.get(), { IconType::Jetpack });
-        }
-        if (auto found = self.m_hooks.find("PlayerObject::setupStreak"); found != self.m_hooks.end()) {
-            IconCountEditor::configureHook(found->second.get(), { IconType::Special, IconType::ShipFire });
-        }
+        IconCountEditor::modify(self.m_hooks, "PlayerObject::updatePlayerSwingFrame", { IconType::Swing });
+        IconCountEditor::modify(self.m_hooks, "PlayerObject::updatePlayerJetpackFrame", { IconType::Jetpack });
+        IconCountEditor::modify(self.m_hooks, "PlayerObject::setupStreak", { IconType::Special, IconType::ShipFire });
     }
 
     bool init(int player, int ship, GJBaseGameLayer* gameLayer, CCLayer* layer, bool playLayer) {
-        player = std::clamp(player, 1, IconCountEditor::getCount(IconType::Cube));
-        ship = std::clamp(ship, 1, IconCountEditor::getCount(IconType::Ship));
+        player = IconCountEditor::clamp(player, IconType::Cube);
+        ship = IconCountEditor::clamp(ship, IconType::Ship);
 
         auto gm = GameManager::get();
         m_iconRequestID = gm->getIconRequestID();
@@ -120,7 +99,7 @@ class $modify(ICEPlayerObject, PlayerObject) {
         m_maybeSavedPlayerFrame = player;
         m_ghostType = GhostType::Disabled;
         m_playerSpeed = 0.9f;
-        m_playerSpeedAC = IconCountEditor::random() * 10.0 + 5.0;
+        m_playerSpeedAC = jasmine::random::get() * 10.0 + 5.0;
         m_gameLayer = gameLayer;
         m_parentLayer = layer;
         m_playEffects = playLayer;
@@ -308,7 +287,7 @@ class $modify(ICEPlayerObject, PlayerObject) {
     }
 
     void updatePlayerFrame(int id) {
-        id = std::clamp(id, 1, IconCountEditor::getCount(IconType::Cube));
+        id = IconCountEditor::clamp(id, IconType::Cube);
         if (id > 0) m_maybeSavedPlayerFrame = id;
 
         GameManager::get()->loadIcon(id, 0, m_iconRequestID);
@@ -322,7 +301,7 @@ class $modify(ICEPlayerObject, PlayerObject) {
     }
 
     void updatePlayerShipFrame(int id) {
-        id = std::clamp(id, 1, IconCountEditor::getCount(IconType::Ship));
+        id = IconCountEditor::clamp(id, IconType::Ship);
 
         GameManager::get()->loadIcon(id, 1, m_iconRequestID);
 
@@ -335,7 +314,7 @@ class $modify(ICEPlayerObject, PlayerObject) {
     }
 
     void updatePlayerRollFrame(int id) {
-        id = std::clamp(id, 1, IconCountEditor::getCount(IconType::Ball));
+        id = IconCountEditor::clamp(id, IconType::Ball);
 
         GameManager::get()->loadIcon(id, 2, m_iconRequestID);
 
@@ -348,7 +327,7 @@ class $modify(ICEPlayerObject, PlayerObject) {
     }
 
     void updatePlayerBirdFrame(int id) {
-        id = std::clamp(id, 1, IconCountEditor::getCount(IconType::Ufo));
+        id = IconCountEditor::clamp(id, IconType::Ufo);
 
         GameManager::get()->loadIcon(id, 3, m_iconRequestID);
 
@@ -363,7 +342,7 @@ class $modify(ICEPlayerObject, PlayerObject) {
     }
 
     void updatePlayerDartFrame(int id) {
-        id = std::clamp(id, 1, IconCountEditor::getCount(IconType::Wave));
+        id = IconCountEditor::clamp(id, IconType::Wave);
 
         GameManager::get()->loadIcon(id, 4, m_iconRequestID);
 
@@ -377,16 +356,16 @@ class $modify(ICEPlayerObject, PlayerObject) {
 
     #ifndef GEODE_IS_WINDOWS // Inlined into MenuGameLayer::resetPlayer on Windows
     void updatePlayerRobotFrame(int id) {
-        createRobot(std::clamp(id, 1, IconCountEditor::getCount(IconType::Robot)));
+        createRobot(IconCountEditor::clamp(id, IconType::Robot));
     }
 
     void updatePlayerSpiderFrame(int id) {
-        createSpider(std::clamp(id, 1, IconCountEditor::getCount(IconType::Spider)));
+        createSpider(IconCountEditor::clamp(id, IconType::Spider));
     }
     #endif
 
     void updatePlayerSwingFrame(int id) {
-        id = std::clamp(id, 1, IconCountEditor::getCount(IconType::Swing));
+        id = IconCountEditor::clamp(id, IconType::Swing);
 
         GameManager::get()->loadIcon(id, 7, m_iconRequestID);
 
@@ -399,7 +378,7 @@ class $modify(ICEPlayerObject, PlayerObject) {
     }
 
     void updatePlayerJetpackFrame(int id) {
-        id = std::clamp(id, 1, IconCountEditor::getCount(IconType::Jetpack));
+        id = IconCountEditor::clamp(id, IconType::Jetpack);
 
         GameManager::get()->loadIcon(id, 8, m_iconRequestID);
 
@@ -415,7 +394,7 @@ class $modify(ICEPlayerObject, PlayerObject) {
         auto gm = GameManager::get();
         auto textureCache = CCTextureCache::get();
 
-        m_playerStreak = std::clamp(gm->m_playerStreak.value(), 1, IconCountEditor::getCount(IconType::Special));
+        m_playerStreak = IconCountEditor::clamp(gm->m_playerStreak.value(), IconType::Special);
         m_hasGlow = gm->m_playerGlow;
         m_streakStrokeWidth = 10.0f;
         auto fade = 0.3f;
@@ -466,7 +445,7 @@ class $modify(ICEPlayerObject, PlayerObject) {
         auto shipFire = gm->m_playerShipFire.value();
         auto shipStreak = (ShipStreak)shipFire;
         m_shipStreakType = shipStreak;
-        shipFire = std::clamp(shipFire, 1, IconCountEditor::getCount(IconType::ShipFire));
+        shipFire = IconCountEditor::clamp(shipFire, IconType::ShipFire);
         if (shipFire > 1) {
             fade = 0.0f;
             stroke = 0.0f;

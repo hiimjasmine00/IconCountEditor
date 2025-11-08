@@ -7,23 +7,19 @@ using namespace geode::prelude;
 
 class $modify(ICESimplePlayer, SimplePlayer) {
     static void onModify(ModifyBase<ModifyDerive<ICESimplePlayer, SimplePlayer>>& self) {
-        if (auto found = self.m_hooks.find("SimplePlayer::init"); found != self.m_hooks.end()) {
-            IconCountEditor::configureHook(found->second.get(), { IconType::Cube });
-        }
-        if (auto found = self.m_hooks.find("SimplePlayer::updatePlayerFrame"); found != self.m_hooks.end()) {
-            IconCountEditor::configureHook(found->second.get(), {
-                IconType::Cube, IconType::Ship, IconType::Ball,
-                IconType::Ufo, IconType::Wave, IconType::Robot,
-                IconType::Spider, IconType::Swing, IconType::Jetpack
-            });
-        }
+        IconCountEditor::modify(self.m_hooks, "SimplePlayer::init", { IconType::Cube });
+        IconCountEditor::modify(self.m_hooks, "SimplePlayer::updatePlayerFrame", {
+            IconType::Cube, IconType::Ship, IconType::Ball,
+            IconType::Ufo, IconType::Wave, IconType::Robot,
+            IconType::Spider, IconType::Swing, IconType::Jetpack
+        });
     }
 
     bool init(int id) {
         auto gm = GameManager::get();
         m_iconRequestID = gm->getIconRequestID();
 
-        id = std::clamp(id, 1, IconCountEditor::getCount(IconType::Cube));
+        id = IconCountEditor::clamp(id, IconType::Cube);
 
         if (!CCSprite::init()) return false;
 
@@ -68,7 +64,7 @@ class $modify(ICESimplePlayer, SimplePlayer) {
         m_secondLayer->setVisible(notRobot);
         m_birdDome->setVisible(notRobot);
 
-        id = std::clamp(id, 1, IconCountEditor::getCount(type));
+        id = IconCountEditor::clamp(id, type);
 
         auto gm = GameManager::get();
         gm->loadIcon(id, (int)type, m_iconRequestID);

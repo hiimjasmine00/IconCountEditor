@@ -8,13 +8,11 @@ using namespace geode::prelude;
 
 class $modify(ICERobotSprite, GJRobotSprite) {
     static void onModify(ModifyBase<ModifyDerive<ICERobotSprite, GJRobotSprite>>& self) {
-        if (auto found = self.m_hooks.find("GJRobotSprite::updateFrame"); found != self.m_hooks.end()) {
-            IconCountEditor::configureHook(found->second.get(), { IconType::Robot, IconType::Spider });
-        }
+        IconCountEditor::modify(self.m_hooks, "GJRobotSprite::updateFrame", { IconType::Robot, IconType::Spider });
     }
 
     void updateFrame(int id) {
-        id = std::clamp(id, 1, IconCountEditor::getCount(m_iconType));
+        id = IconCountEditor::clamp(id, m_iconType);
 
         auto gm = GameManager::get();
         setTexture(gm->loadIcon(id, (int)m_iconType, m_iconRequestID));

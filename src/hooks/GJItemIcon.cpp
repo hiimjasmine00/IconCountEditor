@@ -8,9 +8,7 @@ using namespace geode::prelude;
 
 class $modify(ICEItemIcon, GJItemIcon) {
     static void onModify(ModifyBase<ModifyDerive<ICEItemIcon, GJItemIcon>>& self) {
-        if (auto found = self.m_hooks.find("GJItemIcon::init"); found != self.m_hooks.end()) {
-            IconCountEditor::configureHook(found->second.get(), { IconType::DeathEffect, IconType::Special, IconType::ShipFire });
-        }
+        IconCountEditor::modify(self.m_hooks, "GJItemIcon::init", { IconType::DeathEffect, IconType::Special, IconType::ShipFire });
     }
 
     bool init(UnlockType type, int id, ccColor3B color1, ccColor3B color2, bool dark, bool p5, bool noLabel, ccColor3B) {
