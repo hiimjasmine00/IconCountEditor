@@ -118,9 +118,10 @@ class $modify(ICEPlayLayer, PlayLayer) {
         auto spawnDelay = 1.0f;
         if (m_levelSettings->m_twoPlayerMode && !m_isTestMode && m_level->m_levelType != GJLevelType::Editor && !m_isPlatformer) {
             m_attemptLabel->setVisible(false);
-            runAction(CCSequence::createWithTwoActions(
+            runAction(CCSequence::create(
                 CCDelayTime::create(0.5f),
-                CCCallFunc::create(this, callfunc_selector(PlayLayer::showTwoPlayerGuide))
+                CCCallFunc::create(this, callfunc_selector(PlayLayer::showTwoPlayerGuide)),
+                nullptr
             ));
             spawnDelay = 2.0f;
         }
@@ -190,9 +191,10 @@ class $modify(ICEPlayLayer, PlayLayer) {
         resetLevel();
         m_started = false;
         prepareMusic(false);
-        runAction(CCSequence::createWithTwoActions(
+        runAction(CCSequence::create(
             CCDelayTime::create(spawnDelay),
-            CCCallFunc::create(this, m_passedIntegrity ? callfunc_selector(PlayLayer::startGame) : callfunc_selector(PlayLayer::onQuit))
+            CCCallFunc::create(this, m_passedIntegrity ? callfunc_selector(PlayLayer::startGame) : callfunc_selector(PlayLayer::onQuit)),
+            nullptr
         ));
         scheduleUpdate();
         checkSpawnObjects();

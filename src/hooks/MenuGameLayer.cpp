@@ -15,19 +15,19 @@ class $modify(ICEMenuGameLayer, MenuGameLayer) {
     }
 
     int randomIcon(IconType type) {
-        return jasmine::random::get() * IconCountEditor::getCount(type);
+        return jasmine::random::get(0.0, IconCountEditor::getCount(type));
     }
 
     void resetPlayer() {
         m_playerObject->deactivateStreak(true);
         m_playerObject->deactivateParticle();
-        m_playerObject->setPosition({ (float)(jasmine::random::get() * -500.0 - 100.0), m_playerObject->getPosition().y });
+        m_playerObject->setPosition({ (float)jasmine::random::get(-100.0, -600.0), m_playerObject->getPosition().y });
         m_playerObject->resetAllParticles();
         m_playerObject->togglePlayerScale(false, false);
         m_playerObject->m_hasGlow = jasmine::random::get() > 0.8;
         auto gm = GameManager::get();
-        m_playerObject->setColor(gm->colorForIdx(jasmine::random::get() * 108.0));
-        m_playerObject->setSecondColor(gm->colorForIdx(jasmine::random::get() * 108.0));
+        m_playerObject->setColor(gm->colorForIdx(jasmine::random::get(0.0, 108.0)));
+        m_playerObject->setSecondColor(gm->colorForIdx(jasmine::random::get(0.0, 108.0)));
         m_playerObject->flipGravity(false, false);
         m_playerObject->update(0.0f);
         if (!m_videoOptionsOpen) {

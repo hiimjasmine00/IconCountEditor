@@ -2,8 +2,10 @@
 #include <Geode/binding/GameManager.hpp>
 #include <Geode/binding/GameStatsManager.hpp>
 #include <Geode/binding/GJActionManager.hpp>
+#include <Geode/binding/GJSpiderSprite.hpp>
 #include <Geode/binding/HardStreak.hpp>
 #include <Geode/binding/PlayerFireBoostSprite.hpp>
+#include <Geode/binding/SpriteAnimationManager.hpp>
 #include <Geode/modify/PlayerObject.hpp>
 #include <jasmine/random.hpp>
 
@@ -64,6 +66,8 @@ class $modify(ICEPlayerObject, PlayerObject) {
         #endif
         IconCountEditor::modify(self.m_hooks, "PlayerObject::updatePlayerSwingFrame", { IconType::Swing });
         IconCountEditor::modify(self.m_hooks, "PlayerObject::updatePlayerJetpackFrame", { IconType::Jetpack });
+        IconCountEditor::modify(self.m_hooks, "PlayerObject::toggleRobotMode", { IconType::Robot });
+        IconCountEditor::modify(self.m_hooks, "PlayerObject::toggleSpiderMode", { IconType::Spider });
         IconCountEditor::modify(self.m_hooks, "PlayerObject::setupStreak", { IconType::Special, IconType::ShipFire });
     }
 
@@ -99,7 +103,7 @@ class $modify(ICEPlayerObject, PlayerObject) {
         m_maybeSavedPlayerFrame = player;
         m_ghostType = GhostType::Disabled;
         m_playerSpeed = 0.9f;
-        m_playerSpeedAC = jasmine::random::get() * 10.0 + 5.0;
+        m_playerSpeedAC = jasmine::random::get(5.0, 15.0);
         m_gameLayer = gameLayer;
         m_parentLayer = layer;
         m_playEffects = playLayer;
@@ -388,6 +392,81 @@ class $modify(ICEPlayerObject, PlayerObject) {
         m_vehicleGlow->setDisplayFrame(sfc->spriteFrameByName(fmt::format("jetpack_{:02}_glow_001.png", id).c_str()));
         m_vehicleSpriteSecondary->setPosition(m_vehicleSprite->getContentSize() / 2.0f);
         updateShipSpriteExtra(fmt::format("jetpack_{:02}_extra_001.png", id));
+    }
+
+    void toggleRobotMode(bool enable, bool noEffects) {
+        if (m_isRobot == enable) return;
+
+        m_gameModeChangedTime = m_totalTime;
+        m_isRobot = enable;
+
+        if (enable) {
+            m_mainLayer->addChild(m_robotBatchNode, 2);
+            switchedToMode(GameObjectType::RobotPortal);
+            m_accelerationOrSpeed = 1.5;
+            m_isRotating = false;
+            m_isBallRotating2 = false;
+            m_isBallRotating = false;
+            m_rotationSpeed = 0.0f;
+            setRotation(0.0f);
+            m_iconSprite->setDisplayFrame(CCSpriteFrameCache::get()->spriteFrameByName(fmt::format("robot_{:02}_01_001.png",
+                IconCountEditor::clamp(GameManager::get()->m_playerRobot.value(), IconType::Robot)).c_str()));
+            m_robotSprite->runAnimation(!m_isPlatformer || m_platformerXVelocity != 0.0f ? m_currentRobotAnimation : "idle01");
+            m_iconSprite->setVisible(false);
+            if (!noEffects) spawnPortalCircle({ 255, 50, 50 }, 50.0f);
+            updatePlayerScale();
+            updatePlayerGlow();
+            stopRotation(true, 13);
+            modeDidChange();
+        }
+        else {
+            m_mainLayer->removeChild(m_robotBatchNode, false);
+            m_iconSprite->setVisible(true);
+            m_robotSprite->m_animationManager->stopAnimations();
+            PlayerObject::updatePlayerFrame(m_vehicleSize == 1.0f || !m_defaultMiniIcon ? m_maybeSavedPlayerFrame : 0);
+            updatePlayerGlow();
+            stopRotation(true, 13);
+        }
+    }
+
+    void toggleSpiderMode(bool enable, bool noEffects) {
+        if (m_isSpider == enable) return;
+
+        m_gameModeChangedTime = m_totalTime;
+        m_isSpider = enable;
+
+        if (enable) {
+            m_mainLayer->addChild(m_spiderBatchNode, 2);
+            switchedToMode(GameObjectType::SpiderPortal);
+            m_unkAngle1 = 27.0f;
+            m_width = 27.0f;
+            m_height = 27.0f;
+            m_accelerationOrSpeed = 1.5;
+            m_isRotating = false;
+            m_isBallRotating2 = false;
+            m_isBallRotating = false;
+            m_rotationSpeed = 0.0f;
+            setRotation(0.0f);
+            m_iconSprite->setDisplayFrame(CCSpriteFrameCache::get()->spriteFrameByName(fmt::format("spider_{:02}_01_001.png",
+                IconCountEditor::clamp(GameManager::get()->m_playerSpider.value(), IconType::Spider)).c_str()));
+            if (!m_isPlatformer || m_platformerXVelocity != 0.0f) playDynamicSpiderRun();
+            else m_spiderSprite->runAnimation("idle01");
+            m_iconSprite->setVisible(false);
+            if (!noEffects) spawnPortalCircle({ 255, 50, 50 }, 50.0f);
+            updatePlayerScale();
+            updatePlayerGlow();
+            stopRotation(true, 15);
+            modeDidChange();
+        }
+        else {
+            m_mainLayer->removeChild(m_spiderBatchNode, false);
+            m_iconSprite->setVisible(true);
+            m_spiderSprite->m_animationManager->stopAnimations();
+            PlayerObject::updatePlayerFrame(m_vehicleSize == 1.0f || !m_defaultMiniIcon ? m_maybeSavedPlayerFrame : 0);
+            resetPlayerIcon();
+            updatePlayerGlow();
+            stopRotation(true, 15);
+        }
     }
 
     void setupStreak() {

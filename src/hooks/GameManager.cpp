@@ -54,7 +54,7 @@ class $modify(ICEGameManager, GameManager) {
             m_iconLoadCounts[i] = 0;
         }
         setupGameAnimations();
-        m_chk = { (int)(jasmine::random::get() * 1000000.0 + floor(m_playerUserID.value() / 10000.0)), (int)jasmine::random::get() };
+        m_chk = { (int)(jasmine::random::get(0.0, 1000000.0) + floor(m_playerUserID.value() / 10000.0)), (int)jasmine::random::get() };
         return true;
     }
     #else
